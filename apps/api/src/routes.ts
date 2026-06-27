@@ -15,12 +15,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Provider, Resource, OperatorMandate } from "../../../packages/shared/src/types.js";
 
-let _sampleXml = "<rss version=\"2.0\"><channel><title>Sample</title><item><title>Per-use licensing</title><link>https://example.com/1</link><description>Sample content</description></item></channel></rss>";
+let sampleXml = "<rss version=\"2.0\"><channel><title>Sample</title><item><title>Per-use licensing</title><link>https://example.com/1</link><description>Sample content</description></item></channel></rss>";
 try {
   const __rssDir = join(dirname(fileURLToPath(import.meta.url)), "connectors", "rss");
-  _sampleXml = sampleXml;
+  sampleXml = readFileSync(join(__rssDir, "sample-feed.xml"), "utf8");
 } catch { /* bundled/serverless — inline fallback used */ }
-const sampleXml = _sampleXml;
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health

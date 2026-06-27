@@ -7,7 +7,9 @@ export type AuditType =
   | "agent.decided" | "payment.authorized" | "delivery.submitted"
   | "verification.passed" | "verification.failed" | "payment.released"
   | "receipt.created" | "paid_context.created" | "paid_context.reused"
-  | "purchase.skipped";
+  | "purchase.skipped"
+  | "settlement.authorized" | "settlement.delivering" | "settlement.verified"
+  | "settlement.settling" | "settlement.settled" | "settlement.failed";
 
 export function audit(
   eventType: AuditType,
