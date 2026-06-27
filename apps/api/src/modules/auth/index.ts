@@ -1,0 +1,129 @@
+// Lightweight accounts + sessions for the coherent product flow. Hackathon-grade
+// (scrypt-hashed passwords, random bearer tokens, sessions in memory) — NOT production
+// auth, but real enough that creators and operators sign up, sign in, and connect a
+// wallet. Accounts persist via the snapshot layer; sessions reset on restart (re-login).
+
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { store } from "../../db.js";
+import { id, nowIso, sha256 } from "../../lib/hash.js";
+import { audit } from "../audit/index.js";
+import type { Provider } from "../../../../../packages/shared/src/types.js";
+
+export type Role = "creator" | "operator";
+export interface Account {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  pass: string;            // salt:hash
+  walletAddress?: string;
+  walletKind?: "connected" | "managed";
+  providerId?: string;     // creators: their listing identity
+  workspaceId?: string;    // operators: their agent workspace
+  createdAt: string;
+}
+
+export interface PublicAccount {
+  id: string; email: string; name: string; role: Role;
+  walletAddress?: string; walletKind?: string; providerId?: string; workspaceId?: string;
+}
+
+function hashPw(pw: string): string {
+  const salt = randomBytes(16).toString("hex");
+  return salt + ":" + scryptSync(pw, salt, 64).toString("hex");
+}
+function verifyPw(pw: string, stored: string): boolean {
+  const [salt, h] = stored.split(":");
+  if (!salt || !h) return false;
+  const a = Buffer.from(h, "hex");
+  const b = scryptSync(pw, salt, 64);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+function publicOf(a: Account): PublicAccount {
+  return { id: a.id, email: a.email, name: a.name, role: a.role,
+    walletAddress: a.walletAddress, walletKind: a.walletKind,
+    providerId: a.providerId, workspaceId: a.workspaceId };
+}
+
+function findByEmail(email: string): Account | undefined {
+  for (const a of store.accounts.values()) if (a.email === email.toLowerCase()) return a as Account;
+  return undefined;
+}
+
+export function register(input: { email: string; password: string; name: string; role: Role }):
+  { token: string; account: PublicAccount } | { error: string } {
+  const email = (input.email || "").trim().toLowerCase();
+  if (!email || !input.password || !input.name) return { error: "name, email and password are required" };
+  if (input.password.length < 6) return { error: "password must be at least 6 characters" };
+  if (findByEmail(email)) return { error: "an account with that email already exists" };
+
+  const account: Account = {
+    id: id("acct"), email, name: input.name.trim(), role: input.role,
+    pass: hashPw(input.password), createdAt: nowIso(),
+  };
+
+  if (input.role === "creator") {
+    const pid = "prov_" + sha256("acct:" + email).slice(7, 23);
+    const provider: Provider = {
+      id: pid, name: account.name, providerType: "publisher",
+      status: "active", createdAt: nowIso(), updatedAt: nowIso(),
+    };
+    store.providers.set(pid, provider);
+    account.providerId = pid;
+    audit("provider.created", "provider", pid, { via: "signup" });
+  } else {
+    const wid = "ws_" + account.id.slice(5);
+    store.workspaces.set(wid, {
+      id: wid, name: `${account.name}'s workspace`,
+      budgetUsdc: "1.000000", perTaskMaxUsdc: "0.050000",
+      mandate: { budgetUsdc: "1.000000", perTaskMaxUsdc: "0.050000", maxPricePerSourceUsdc: "0.050000",
+        minRelevance: 0.25, valuePerCentThreshold: 0.1, preferredProviderIds: [], blockedProviderIds: [], requireCitation: false },
+    });
+    account.workspaceId = wid;
+  }
+
+  store.accounts.set(account.id, account);
+  const token = randomBytes(24).toString("hex");
+  store.sessions.set(token, account.id);
+  return { token, account: publicOf(account) };
+}
+
+export function login(input: { email: string; password: string }):
+  { token: string; account: PublicAccount } | { error: string } {
+  const a = findByEmail((input.email || "").trim().toLowerCase());
+  if (!a || !verifyPw(input.password || "", a.pass)) return { error: "invalid email or password" };
+  const token = randomBytes(24).toString("hex");
+  store.sessions.set(token, a.id);
+  return { token, account: publicOf(a) };
+}
+
+export function accountFromToken(token?: string): Account | undefined {
+  if (!token) return undefined;
+  const t = token.replace(/^Bearer\s+/i, "");
+  const aid = store.sessions.get(t);
+  return aid ? (store.accounts.get(aid) as Account | undefined) : undefined;
+}
+
+export function me(token?: string): PublicAccount | { error: string } {
+  const a = accountFromToken(token);
+  return a ? publicOf(a) : { error: "not authenticated" };
+}
+
+export function setWallet(token: string | undefined, walletAddress: string | undefined, kind: "connected" | "managed"):
+  PublicAccount | { error: string } {
+  const a = accountFromToken(token);
+  if (!a) return { error: "not authenticated" };
+  let addr = walletAddress;
+  if (kind === "managed" && !addr) addr = "0x" + sha256("managed:" + a.email + a.id).slice(7, 47); // provisioned stub
+  if (!addr) return { error: "walletAddress required" };
+  a.walletAddress = addr;
+  a.walletKind = kind;
+  if (a.providerId) {
+    const p = store.providers.get(a.providerId);
+    if (p) { p.walletAddress = addr; p.updatedAt = nowIso(); }
+  }
+  store.accounts.set(a.id, a);
+  return publicOf(a);
+}
+
+export { publicOf };

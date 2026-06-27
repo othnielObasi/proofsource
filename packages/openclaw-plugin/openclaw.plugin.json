@@ -1,0 +1,16 @@
+{
+  "id": "proofsource",
+  "name": "ProofSource",
+  "description": "Pay the sources your assistant cites. When ProofSource grounds an answer in a creator's work, it settles a sub-cent USDC nanopayment to them on Arc, with a verifiable receipt.",
+  "contracts": { "tools": ["proofsource_ask", "proofsource_traction", "proofsource_creator_earnings"] },
+  "activation": { "onStartup": true },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "url": { "type": "string", "description": "ProofSource deployment URL (e.g. https://proofsource.yourdomain)" },
+      "token": { "type": "string", "description": "Operator bearer token (from ProofSource sign-in)" },
+      "workspaceId": { "type": "string", "description": "Operator workspace id the agent pays from" }
+    }
+  }
+}

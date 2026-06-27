@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/v1/:path*", "destination": "/api/index" },
+    { "source": "/demo/:path*", "destination": "/api/index" }
+  ],
+  "env": {
+    "PAYMENT_MODE": "mock",
+    "PERSIST_DISABLED": "true"
+  }
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Get paid when AI cites your work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0B0F17;--ink2:#0E1420;--panel:#151D2B;--panel2:#1B2434;--line:#273141;--mut:#8A97AC;--faint:#5E6B80;--text:#E7ECF3;--buy:#5BC0EB;--earned:#54B488}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1100px 600px at 80% -12%,#11203022,transparent),var(--ink);
+    color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5}
+  .mono{font-family:"JetBrains Mono",monospace}
+  header{display:flex;align-items:center;gap:14px;padding:18px 26px;border-bottom:1px solid var(--line)}
+  header b{font-family:Fraunces,serif;font-weight:600;font-size:19px}
+  header .tag{color:var(--mut);font-size:12px}
+  header a{margin-left:auto;color:var(--mut);font-size:13px;text-decoration:none}
+  main{max-width:760px;margin:0 auto;padding:40px 24px}
+  h1{font-family:Fraunces,serif;font-weight:600;font-size:38px;line-height:1.12;letter-spacing:-0.02em;margin:0 0 14px}
+  h1 em{color:var(--earned);font-style:normal}
+  .sub{font-size:16px;color:var(--mut);max-width:560px;margin:0 0 30px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:16px;padding:24px}
+  label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:18px 0 7px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=url]{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;color:var(--text);font-family:inherit;font-size:14px}
+  input::placeholder{color:var(--faint)}
+  .row2{display:grid;grid-template-columns:1fr 140px;gap:12px}
+  .hint{font-size:12px;color:var(--faint);margin-top:6px}
+  .seg{display:flex;gap:8px;margin-top:4px}
+  .seg button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:11px;font:inherit;cursor:pointer}
+  .seg button.on{border-color:#2c5a70;color:var(--buy);background:#0f1a22}
+  .wallet-managed{display:flex;align-items:center;gap:10px;background:#10231b;border:1px solid #1f4636;border-radius:10px;padding:11px 13px;color:var(--earned);font-size:13px;margin-top:8px}
+  .go{margin-top:24px;width:100%;background:var(--earned);color:#04210f;border:none;border-radius:11px;padding:14px;
+    font-family:Inter;font-weight:600;font-size:15px;cursor:pointer}
+  .go:disabled{opacity:.5;cursor:default}
+  .trust{display:flex;gap:22px;margin-top:26px;flex-wrap:wrap}
+  .trust div{font-size:12.5px;color:var(--mut);max-width:210px}
+  .trust b{color:var(--text);font-family:Fraunces,serif;display:block;font-size:14px;margin-bottom:2px}
+  .result{margin-top:18px}
+  .ok{background:#10231b;border:1px solid #1f4636;border-radius:14px;padding:20px}
+  .ok h3{font-family:Fraunces,serif;margin:0 0 6px;font-size:20px;color:var(--earned)}
+  .ok a{color:var(--buy)}
+  .err{background:#2a1c1b;border:1px solid #4a2b27;border-radius:12px;padding:14px;color:#f0a59c;font-size:13px}
+  .kv{font-size:13px;color:var(--mut);margin-top:4px}.kv b{color:var(--text);font-family:"JetBrains Mono",monospace}
+</style>
+</head>
+<body>
+<header><b class="serif">ProofSource</b><span class="tag">for creators</span><a href="/traction.html">See it working →</a></header>
+<main>
+  <h1>Get paid when <em>AI cites your work.</em></h1>
+  <p class="sub">AI agents read your articles to answer questions. List your work, set a price per use, and earn a small payment — settled instantly — every time an agent grounds an answer in something you wrote. No subscriptions, no ads.</p>
+
+  <div class="card" id="form">
+    <label>Your name or publication</label>
+    <input id="name" type="text" placeholder="e.g. Maya Okonkwo, or The Independent Ledger" />
+
+    <label>Connect your writing</label>
+    <div class="seg">
+      <button id="tabFeed" class="on" onclick="tab('feed')">An RSS / RSSHub feed</button>
+      <button id="tabSample" onclick="tab('sample')">Try with sample articles</button>
+    </div>
+    <div id="feedWrap" style="margin-top:10px">
+      <input id="feed" type="url" placeholder="https://yourblog.com/rss  or  https://rsshub.app/…" />
+      <div class="hint">Any RSS or Atom feed. Don't have one? RSSHub can generate a feed for almost any source — or try the sample to see how it works.</div>
+    </div>
+
+    <div class="row2">
+      <div>
+        <label>Price per citation</label>
+        <input id="price" type="text" value="0.002" />
+        <div class="hint">In USDC. Sub-cent is normal — you earn on volume, every time you're cited.</div>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <div class="mono" style="padding:12px 0;color:var(--mut)">≈ $0.002 / use</div>
+      </div>
+    </div>
+
+    <label>Where you get paid</label>
+    <div class="seg">
+      <button id="tabManaged" class="on" onclick="wallet('managed')">Create a wallet for me</button>
+      <button id="tabOwn" onclick="wallet('own')">I have a wallet</button>
+    </div>
+    <div id="managedWrap" class="wallet-managed">✓ We'll set up a secure USDC wallet for you — no crypto knowledge needed. You can withdraw anytime.</div>
+    <div id="ownWrap" style="display:none;margin-top:8px"><input id="addr" type="text" placeholder="0x… your USDC wallet on Arc" /></div>
+
+    <button class="go" id="submit" onclick="submit()">List my work &amp; start earning</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="trust">
+    <div><b>You keep control</b>You set the price and terms. Agents can't use your work without paying — access is enforced, not requested.</div>
+    <div><b>Proof every time</b>Every payment comes with a verifiable receipt showing exactly which piece was cited.</div>
+    <div><b>Pay once, cited free</b>An agent that already paid for a piece reuses it without charging you twice — fair to readers, honest to you.</div>
+  </div>
+</main>
+<script>
+let feedMode='feed', walletMode='managed';
+const $=(id)=>document.getElementById(id);
+function tab(m){feedMode=m;$("tabFeed").classList.toggle('on',m==='feed');$("tabSample").classList.toggle('on',m==='sample');$("feedWrap").style.display=m==='feed'?'block':'none';}
+function wallet(m){walletMode=m;$("tabManaged").classList.toggle('on',m==='managed');$("tabOwn").classList.toggle('on',m==='own');$("managedWrap").style.display=m==='managed'?'flex':'none';$("ownWrap").style.display=m==='own'?'block':'none';}
+async function submit(){
+  const name=$("name").value.trim();
+  if(!name){$("result").innerHTML='<div class="err">Please enter your name or publication.</div>';return;}
+  const body={name, priceUsdc:$("price").value.trim()||'0.002'};
+  if(feedMode==='sample') body.sample=true; else body.feedUrl=$("feed").value.trim();
+  if(walletMode==='managed') body.managedWallet=true; else body.walletAddress=$("addr").value.trim();
+  $("submit").disabled=true;$("submit").textContent='Setting up…';
+  try{
+    const r=await (await fetch('/v1/proofsource/creators/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})).json();
+    if(r.error){$("result").innerHTML=`<div class="err">${r.error}</div>`;}
+    else{
+      $("form").style.display='none';
+      $("result").innerHTML=`<div class="ok">
+        <h3>You're live, ${r.name}.</h3>
+        <p style="color:var(--mut);margin:.2em 0 1em">${r.listed} piece(s) listed at $${Number(body.priceUsdc).toFixed(6)} each. Agents can now cite — and pay — for your work.</p>
+        <div class="kv">Your payout wallet: <b>${r.walletAddress.slice(0,10)}…${r.walletAddress.slice(-6)}</b>${r.managed?' (managed for you)':''}</div>
+        <div class="kv" style="margin-top:14px"><a href="${r.dashboardUrl}">Open your earnings dashboard →</a></div>
+      </div>`;
+    }
+  }catch(e){$("result").innerHTML=`<div class="err">Something went wrong: ${e.message}</div>`;}
+  $("submit").disabled=false;$("submit").textContent='List my work & start earning';
+}
+</script>
+</body>
+</html>

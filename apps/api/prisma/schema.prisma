@@ -1,0 +1,151 @@
+// Production schema. The in-memory store in src/db.ts mirrors these models 1:1;
+// switching to Postgres is a drop-in replacement of the store accessors.
+// generator client { provider = "prisma-client-js" }
+// datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id            String   @id
+  name          String
+  budgetUsdc    String
+  perTaskMaxUsdc String
+  createdAt     DateTime @default(now())
+}
+
+model Provider {
+  id            String   @id
+  name          String
+  providerType  String
+  walletAddress String?
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  resources     Resource[]
+}
+
+model Resource {
+  id                  String   @id
+  providerId          String
+  provider            Provider @relation(fields: [providerId], references: [id])
+  title               String
+  description         String
+  resourceType        String
+  contentBody         String
+  contentHash         String
+  priceUsdc           String
+  usageRights         Json
+  freshnessHalfLifeDays Int?
+  status              String   @default("active")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model PurchaseRequest {
+  id             String   @id
+  workspaceId    String
+  agentId        String
+  resourceId     String
+  userQuestion   String
+  accessReason   String
+  maxSpendUsdc   String
+  status         String
+  decisionReason String?
+  createdAt      DateTime @default(now())
+}
+
+model PaymentAuthorization {
+  id                String   @id
+  purchaseRequestId String
+  workspaceId       String
+  agentId           String
+  providerId        String
+  resourceId        String
+  amountUsdc        String
+  currency          String   @default("USDC")
+  status            String
+  paymentMode       String
+  idempotencyKey    String   @unique
+  expiresAt         DateTime
+  externalReference String?
+  createdAt         DateTime @default(now())
+}
+
+model Delivery {
+  id              String   @id
+  authorizationId String
+  providerId      String
+  resourceId      String
+  payload         String
+  contentHash     String
+  status          String
+  deliveredAt     DateTime @default(now())
+}
+
+model Verification {
+  id              String   @id
+  authorizationId String
+  deliveryId      String
+  status          String
+  checks          Json
+  failureReason   String?
+  verifiedAt      DateTime @default(now())
+}
+
+model Payment {
+  id                 String   @id
+  authorizationId    String
+  amountUsdc         String
+  status             String
+  transactionHash    String?
+  circleTransactionId String?
+  explorerUrl        String?
+  releasedAt         DateTime @default(now())
+}
+
+model Receipt {
+  id              String   @id
+  workspaceId     String
+  agentId         String
+  providerId      String
+  resourceId      String
+  authorizationId String
+  deliveryId      String
+  verificationId  String
+  paymentId       String
+  deliveryHash    String
+  receiptHash     String
+  usageRights     Json
+  chainReference  Json?
+  createdAt       DateTime @default(now())
+}
+
+model PaidContext {
+  id          String    @id
+  workspaceId String
+  resourceId  String
+  receiptId   String
+  contentHash String
+  sourceTitle String
+  summary     String
+  reusable    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model AuditEvent {
+  id          String   @id
+  workspaceId String?
+  eventType   String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}

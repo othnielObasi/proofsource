@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Traction</title>
+<link rel="stylesheet" href="/app.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0B0F17;--ink2:#0E1420;--panel:#151D2B;--line:#273141;--mut:#8A97AC;--faint:#5E6B80;--text:#E7ECF3;--buy:#5BC0EB;--earned:#54B488}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1100px 560px at 82% -12%,#11203022,transparent),var(--ink);
+    color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px}
+  .mono{font-family:"JetBrains Mono",monospace}
+  header{display:flex;align-items:center;gap:16px;padding:18px 26px;border-bottom:1px solid var(--line)}
+  header b{font-family:Fraunces,serif;font-weight:600;font-size:19px}
+  header .tag{color:var(--mut);font-size:12px}
+  .pill{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--earned)}
+  main{max-width:1060px;margin:0 auto;padding:26px}
+  .lede{font-family:Fraunces,serif;font-size:21px;line-height:1.35;max-width:680px;margin:6px 0 22px}
+  .lede em{color:var(--buy);font-style:normal}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;padding:16px 17px}
+  .kpi .l{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .kpi .v{font-family:Fraunces,serif;font-size:30px;font-weight:600;margin-top:7px;letter-spacing:-0.02em}
+  .kpi .s{font-size:12px;color:var(--mut);margin-top:3px}
+  .kpi.hl{border-color:#2c5a70} .kpi.hl .v{color:var(--buy)}
+  .kpi.earn .v{color:var(--earned)}
+  section{margin-top:26px}
+  h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse;background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600;padding:12px 16px}
+  td{padding:13px 16px;border-top:1px solid var(--line)}
+  td.n{font-family:"JetBrains Mono",monospace;text-align:right;color:var(--earned)}
+  .bar{height:7px;border-radius:5px;background:#0a0e16;border:1px solid var(--line);overflow:hidden;min-width:90px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#2f6f51,var(--earned))}
+  .funnel{display:flex;gap:10px;flex-wrap:wrap}
+  .fn{flex:1;min-width:120px;background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .fn .v{font-family:"JetBrains Mono",monospace;font-size:20px;margin-top:4px}
+  .foot{color:var(--faint);font-size:12px;margin-top:22px}
+  @media(max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header id="ps-header" class="ps-header"></header>
+<main>
+  <p class="lede">Real creators, paid by autonomous reader-agents — <em>per citation, sub-cent, in USDC.</em> These figures are computed from settled receipts, not seeded.</p>
+
+  <div class="grid">
+    <div class="kpi earn"><div class="l">Creators earning</div><div class="v" id="creators">—</div><div class="s">distinct paid sources</div></div>
+    <div class="kpi earn"><div class="l">Total payouts</div><div class="v" id="payouts">—</div><div class="s">USDC to creators</div></div>
+    <div class="kpi hl"><div class="l">Payments made</div><div class="v" id="payments">—</div><div class="s">autonomous settlements</div></div>
+    <div class="kpi"><div class="l">Avg payment</div><div class="v" id="avg">—</div><div class="s">sub-cent per citation</div></div>
+  </div>
+
+  <section>
+    <h3>Funnel</h3>
+    <div class="funnel">
+      <div class="fn"><div class="l" style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em">Reader-agents</div><div class="v" id="readers">—</div></div>
+      <div class="fn"><div class="l" style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em">Tasks run</div><div class="v" id="tasks">—</div></div>
+      <div class="fn"><div class="l" style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em">Reader→payer</div><div class="v" id="conv">—</div></div>
+      <div class="fn"><div class="l" style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em">Reuse rate</div><div class="v" id="reuse">—</div></div>
+      <div class="fn"><div class="l" style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em">Cost / task</div><div class="v" id="cpt">—</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Creators earning</h3>
+    <table><thead><tr><th>Creator</th><th>Citations paid</th><th style="text-align:right">Earned (USDC)</th></tr></thead>
+      <tbody id="creatorRows"><tr><td colspan="3" style="color:var(--mut)">loading…</td></tr></tbody></table>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</main>
+<script>
+async function load(){
+  const m = await (await fetch('/v1/proofsource/dashboard/traction')).json();
+  const $ = (id)=>document.getElementById(id);
+  $("mode").textContent = m.paymentMode === 'arc_testnet' ? 'Arc testnet · live' : 'mock mode';
+  $("modedot").style.background = m.paymentMode === 'arc_testnet' ? '#54B488' : '#E0A458';
+  $("creators").textContent = m.creatorsEarning;
+  $("payouts").textContent = '$'+Number(m.totalPayoutUsdc).toFixed(4);
+  $("payments").textContent = m.paymentCount;
+  $("avg").textContent = '$'+Number(m.avgTransactionUsdc).toFixed(6);
+  $("readers").textContent = m.readers;
+  $("tasks").textContent = m.tasks;
+  $("conv").textContent = Math.round(m.readerToPayerConversion*100)+'%';
+  $("reuse").textContent = Math.round(m.reuseRate*100)+'%';
+  $("cpt").textContent = '$'+Number(m.costPerTaskUsdc).toFixed(6);
+  const max = Math.max(...m.perCreator.map(c=>Number(c.earningsUsdc)), 0.000001);
+  $("creatorRows").innerHTML = m.perCreator.map(c=>`<tr>
+    <td>${c.creator}</td>
+    <td><div style="display:flex;align-items:center;gap:10px"><div class="bar"><i style="width:${(Number(c.earningsUsdc)/max*100).toFixed(0)}%"></i></div><span class="mono" style="color:var(--mut);font-size:12px">${c.sales}×</span></div></td>
+    <td class="n">${Number(c.earningsUsdc).toFixed(6)}</td></tr>`).join('') || '<tr><td colspan="3" style="color:var(--mut)">No settlements yet — run the harness.</td></tr>';
+  $("foot").textContent = `Updated ${new Date(m.generatedAt).toLocaleString()} · figures derived from settled receipts.`;
+}
+load(); setInterval(load, 5000);
+</script>
+<script src="/app.js"></script>
+<script>PS.header("traction");</script>
+</body>
+</html>

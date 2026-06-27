@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Agent Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0F17; --ink2:#0E1420; --panel:#151D2B; --panel2:#1B2434;
+    --line:#273141; --mut:#8A97AC; --text:#E7ECF3; --faint:#5E6B80;
+    --paper:#F2EBDD; --paper-line:#D8CDB8; --paper-ink:#2A2620; --paper-mut:#7A7160;
+    --buy:#5BC0EB; --reuse:#B49BEA; --skip:#E0A458; --block:#E06A5E; --earned:#54B488;
+    --brand:#5BC0EB;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:
+      radial-gradient(1200px 600px at 80% -10%, #11203022, transparent),
+      var(--ink);
+    color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5;
+    letter-spacing:-0.005em}
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  .serif{font-family:Fraunces,Georgia,serif}
+  a{color:inherit}
+
+  /* top bar */
+  header{display:flex;align-items:center;gap:18px;padding:16px 26px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;background:rgba(11,15,23,.82);backdrop-filter:blur(10px);z-index:5}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand b{font-family:Fraunces,serif;font-weight:600;font-size:19px;letter-spacing:-0.01em}
+  .brand .tag{color:var(--mut);font-size:12px}
+  .grow{flex:1}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);
+    border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--earned);box-shadow:0 0 0 0 #54b48899;animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #54b48855}70%{box-shadow:0 0 0 7px #54b48800}100%{box-shadow:0 0 0 0 #54b48800}}
+  .ticker{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--text)}
+  .ticker s{color:var(--faint);text-decoration:none}
+
+  /* layout */
+  main{display:grid;grid-template-columns:248px minmax(0,1fr) 360px;gap:22px;
+    max-width:1320px;margin:0 auto;padding:26px}
+  .col{display:flex;flex-direction:column;gap:18px}
+  .eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+    font-weight:600;margin:0 0 11px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);
+    border-radius:var(--r);padding:17px 18px}
+
+  /* mandate (left) */
+  .meter{height:7px;border-radius:6px;background:#0a0e16;border:1px solid var(--line);overflow:hidden;margin:6px 0 4px}
+  .meter i{display:block;height:100%;background:linear-gradient(90deg,#33506b,var(--buy))}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+  .row:first-of-type{border-top:0}
+  .row span{color:var(--mut)} .row b{font-family:"JetBrains Mono",monospace;font-weight:500}
+  .tg{width:34px;height:20px;border-radius:11px;background:#222c3c;border:1px solid var(--line);position:relative}
+  .tg.on{background:#1f3a4a;border-color:#2c5a70}
+  .tg::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--mut)}
+  .tg.on::after{left:16px;background:var(--buy)}
+  .note{font-size:12px;color:var(--faint);margin-top:12px;line-height:1.45}
+
+  /* run (center) */
+  .ask{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);
+    border-radius:12px;padding:6px 6px 6px 16px}
+  .ask .q{flex:1;font-family:Fraunces,serif;font-size:18px;color:var(--text)}
+  .ask .go{font-family:Inter;font-weight:600;font-size:13px;background:var(--buy);color:#04222e;border:none;
+    border-radius:9px;padding:10px 16px;cursor:pointer}
+  .verdict-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+  .badge{font-weight:600;font-size:12px;letter-spacing:.04em;padding:4px 11px;border-radius:7px}
+  .b-buy{background:#13384a;color:var(--buy)} .b-reuse{background:#2c2547;color:var(--reuse)}
+  .b-skip{background:#3a2e1a;color:var(--skip)} .b-block{background:#3a211f;color:var(--block)}
+  .reason{color:var(--mut);font-size:13px;margin:2px 0 0}
+  .policy{font-size:11.5px;color:var(--faint);margin-top:8px}
+
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  thead th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    font-weight:600;padding:0 10px 9px}
+  tbody td{padding:12px 10px;border-top:1px solid var(--line);vertical-align:middle}
+  tr.pick td{background:#0f1a22}
+  tr.pick td:first-child{box-shadow:inset 3px 0 0 var(--buy)}
+  .src{display:flex;flex-direction:column;gap:2px}
+  .src .t{font-family:Fraunces,serif;font-size:14.5px;color:var(--text);line-height:1.25}
+  .src .a{font-size:12px;color:var(--mut)}
+  .rel{display:flex;align-items:center;gap:8px;min-width:118px}
+  .bar{flex:1;height:6px;border-radius:5px;background:#0a0e16;border:1px solid var(--line);overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#34546d,var(--buy))}
+  .relpct{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mut);width:34px;text-align:right}
+  .price{font-family:"JetBrains Mono",monospace;font-size:12.5px}
+  .vc{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--mut)}
+  .chip{font-size:11px;padding:3px 9px;border-radius:6px;white-space:nowrap}
+  .c-buy{background:#13384a;color:var(--buy)} .c-skip{background:#26221a;color:var(--skip)}
+  .c-block{background:#2a1c1b;color:var(--block)}
+
+  /* lifecycle */
+  .steps{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .step{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);
+    background:#0e1622;border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+  .step.done{color:var(--text)} .step .k{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+  .step.done .k{background:var(--earned)}
+  .step.gate{border-color:#2c5a70;color:var(--buy)} .step.gate .k{background:var(--buy)}
+  .arrow{color:var(--faint);font-size:11px}
+
+  .answer{font-family:Fraunces,serif;font-size:15.5px;line-height:1.6;color:#e9eef5}
+  .answer .cite{color:var(--buy);text-decoration:none;border-bottom:1px solid #2c5a70}
+
+  /* receipt (right) — the signature artifact */
+  .receipt{background:var(--paper);color:var(--paper-ink);border-radius:11px;position:relative;
+    padding:22px 22px 18px;box-shadow:0 24px 50px -20px #0006, 0 2px 0 #fff8 inset;
+    font-family:"JetBrains Mono",monospace}
+  .receipt::before{content:"";position:absolute;top:-9px;left:0;right:0;height:9px;
+    background:radial-gradient(circle at 8px -2px, transparent 6px, var(--paper) 6.5px) repeat-x;
+    background-size:16px 9px}
+  .rc-h{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px dashed var(--paper-line);padding-bottom:13px}
+  .rc-h .lab{font-size:10px;letter-spacing:.16em;color:var(--paper-mut)}
+  .rc-h .title{font-family:Fraunces,serif;font-size:16px;font-weight:600;margin-top:3px;max-width:200px;line-height:1.2}
+  .seal{border:1.5px solid var(--earned);color:#2f6f51;border-radius:7px;font-size:9px;letter-spacing:.1em;
+    text-align:center;padding:5px 8px;transform:rotate(4deg);font-weight:500;line-height:1.3;flex:none}
+  .rc-amt{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0}
+  .rc-amt .n{font-family:Fraunces,serif;font-size:30px;font-weight:600;letter-spacing:-0.02em}
+  .rc-amt .who{font-size:11px;color:var(--paper-mut);text-align:right}
+  .rc-amt .who b{color:var(--paper-ink);font-family:Inter;font-weight:600;font-size:12.5px;display:block}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:10.5px;color:#4c4636;margin:10px 0 12px;
+    border-top:1.5px dashed var(--paper-line);padding-top:12px}
+  .checks div::before{content:"✓ ";color:#2f6f51;font-weight:700}
+  .kv2{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;color:var(--paper-mut)}
+  .kv2 b{color:var(--paper-ink);font-weight:500}
+  .rc-chain{border-top:1.5px dashed var(--paper-line);margin-top:8px;padding-top:11px;font-size:11px}
+  .rc-chain a{color:#2f6f51;font-weight:500}
+  .earned-strip{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--earned);
+    background:#10231b;border:1px solid #1f4636;border-radius:11px;padding:12px 15px}
+  .earned-strip b{color:#9fe7c6;font-family:"JetBrains Mono",monospace}
+
+  .fade{opacity:0;transform:translateY(8px);animation:in .6s ease forwards}
+  .d1{animation-delay:.05s}.d2{animation-delay:.13s}.d3{animation-delay:.22s}.d4{animation-delay:.32s}
+  @keyframes in{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.fade{animation:none;opacity:1;transform:none}.dot{animation:none}}
+
+  @media (max-width:1080px){
+    main{grid-template-columns:1fr;max-width:620px}
+    .col.right{order:-1}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b class="serif">ProofSource</b><span class="tag">proof-of-citation settlement</span></div>
+  <div class="grow"></div>
+  <span class="ticker"><s>today</s>&nbsp; $0.0247 settled · 12 verified citations</span>
+  <span class="pill"><span class="dot"></span> Arc testnet · live</span>
+</header>
+
+<main>
+  <!-- LEFT: the operator's mandate -->
+  <section class="col left">
+    <div class="card fade d1">
+      <p class="eyebrow">Operator mandate</p>
+      <div style="font-size:12px;color:var(--mut)">Workspace budget</div>
+      <div class="meter"><i style="width:34%"></i></div>
+      <div class="row" style="border:0;padding-top:2px"><span class="mono" style="font-size:12px">$0.34 spent</span><b style="color:var(--text)">$1.00</b></div>
+      <div class="row"><span>Per-task ceiling</span><b>$0.05</b></div>
+      <div class="row"><span>Max / source</span><b>$0.05</b></div>
+      <div class="row"><span>Preferred creators</span><b>0</b></div>
+      <div class="row"><span>Blocked creators</span><b>0</b></div>
+      <div class="row"><span>Require citation</span><span class="tg" title="off"></span></div>
+      <p class="note">The rules the agent obeys. Creators price their own work; the operator sets the budget and the policy; the agent only chooses which permitted source is worth paying for.</p>
+    </div>
+    <div class="card fade d2">
+      <p class="eyebrow">This run</p>
+      <div class="row" style="border:0"><span>Decision</span><b style="color:var(--buy)">BUY</b></div>
+      <div class="row"><span>Settled</span><b>$0.002</b></div>
+      <div class="row"><span>Reused (free)</span><b>0</b></div>
+      <div class="row"><span>Verification</span><b style="color:var(--earned)">passed</b></div>
+    </div>
+  </section>
+
+  <!-- CENTER: the agent run -->
+  <section class="col center">
+    <div class="ask fade d1">
+      <div class="q serif">What are the key arguments around AI content licensing and creator compensation?</div>
+      <button class="go">Run</button>
+    </div>
+
+    <div class="card fade d2">
+      <div class="verdict-head">
+        <span class="badge b-buy">BUY</span>
+        <span class="eyebrow" style="margin:0">Agent decision</span>
+      </div>
+      <p class="reason">Chose the best <i>permitted</i> source of 3 on value-per-cent — within the per-task ceiling and budget. Settlement releases only after delivery is verified.</p>
+      <table>
+        <thead><tr><th>Source</th><th>Relevance</th><th>Price</th><th>Value/¢</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr class="pick">
+            <td><div class="src"><span class="t">AI content licensing and creator compensation</span><span class="a">Maya Okonkwo · The Independent Ledger</span></div></td>
+            <td><div class="rel"><div class="bar"><i style="width:80%"></i></div><span class="relpct">80%</span></div></td>
+            <td class="price">$0.002</td><td class="vc">0.40</td>
+            <td><span class="chip c-buy">bought</span></td>
+          </tr>
+          <tr>
+            <td><div class="src"><span class="t">Why subscriptions priced out the five-cent article</span><span class="a">Daniel Reyes · The Independent Ledger</span></div></td>
+            <td><div class="rel"><div class="bar"><i style="width:20%"></i></div><span class="relpct">20%</span></div></td>
+            <td class="price">$0.002</td><td class="vc">0.10</td>
+            <td><span class="chip c-skip">below floor 0.25</span></td>
+          </tr>
+          <tr>
+            <td><div class="src"><span class="t">Surface-code roadmaps for 2026</span><span class="a">Lin Wei · The Independent Ledger</span></div></td>
+            <td><div class="rel"><div class="bar"><i style="width:3%"></i></div><span class="relpct">0%</span></div></td>
+            <td class="price">$0.002</td><td class="vc">0.00</td>
+            <td><span class="chip c-skip">off-topic</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="policy">Operator policy in force: max price/source $0.05 · relevance floor 0.25 · budget $1.00</p>
+    </div>
+
+    <div class="card fade d3">
+      <p class="eyebrow">Lifecycle</p>
+      <div class="steps">
+        <span class="step done"><span class="k"></span>discover</span><span class="arrow">→</span>
+        <span class="step done"><span class="k"></span>decide</span><span class="arrow">→</span>
+        <span class="step done"><span class="k"></span>authorize</span><span class="arrow">→</span>
+        <span class="step done"><span class="k"></span>x402 deliver</span><span class="arrow">→</span>
+        <span class="step gate"><span class="k"></span>verify ✓</span><span class="arrow">→</span>
+        <span class="step done"><span class="k"></span>release</span><span class="arrow">→</span>
+        <span class="step done"><span class="k"></span>receipt</span><span class="arrow">→</span>
+        <span class="step done"><span class="k"></span>answer</span>
+      </div>
+    </div>
+
+    <div class="card fade d4">
+      <p class="eyebrow">Answer</p>
+      <p class="answer">The debate turns on three contested questions: whether training on copyrighted work is fair use, how creators are compensated when models ground answers in their work, and whether per-use settlement can replace blanket licensing — with advocates arguing a source should earn each time an agent cites it, not once at training. <a class="cite" href="#">— cited: Okonkwo, <i>AI content licensing…</i></a></p>
+    </div>
+  </section>
+
+  <!-- RIGHT: the proof (signature artifact) -->
+  <section class="col right">
+    <div class="receipt fade d3">
+      <div class="rc-h">
+        <div><div class="lab">PROOF OF CITATION</div><div class="title">AI content licensing and creator compensation</div></div>
+        <div class="seal">SETTLED<br>ON ARC</div>
+      </div>
+      <div class="rc-amt">
+        <div class="n">$0.002</div>
+        <div class="who">paid to<br><b>Maya Okonkwo</b>The Independent Ledger</div>
+      </div>
+      <div class="checks">
+        <div>resource match</div><div>provider match</div>
+        <div>payload present</div><div>hash generated</div>
+        <div>content non-empty</div><div>within expiry</div>
+        <div>usage rights</div><div>verified before release</div>
+      </div>
+      <div class="kv2"><span>delivery hash</span><b>sha256:8f3a…c1d9</b></div>
+      <div class="kv2"><span>receipt hash</span><b>sha256:b27e…04af</b></div>
+      <div class="kv2"><span>usage</span><b>citation · reusable 30d</b></div>
+      <div class="rc-chain">
+        <div class="kv2" style="color:var(--paper-ink)"><span style="color:var(--paper-mut)">Arc tx</span><b>0x9c4f…7a21</b></div>
+        <a href="#">View on Arc explorer →</a>
+      </div>
+    </div>
+
+    <div class="earned-strip fade d4">
+      <span class="dot" style="background:var(--earned)"></span>
+      <div>Maya Okonkwo earned <b>$0.002</b> — pay once, cited free on every reuse.</div>
+    </div>
+
+    <div class="card fade d4">
+      <p class="eyebrow">Why the creator was paid</p>
+      <p style="color:var(--mut);font-size:12.5px;margin:0;line-height:1.5">Highest value-per-cent of three permitted sources at 80% relevance. The agent couldn't access the article without paying — and the payment only finalized into this receipt after delivery verified.</p>
+    </div>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "@proofsource/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "proofsource-mcp": "src/index.ts" },
+  "scripts": { "start": "tsx src/index.ts" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@proofsource/sdk": "*"
+  }
+}

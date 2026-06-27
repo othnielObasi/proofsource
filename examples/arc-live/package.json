@@ -1,0 +1,26 @@
+{
+  "name": "@proofsource/arc-live",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone: one real sub-cent USDC payment on Arc via Circle Gateway (x402 batched).",
+  "scripts": {
+    "seller": "tsx src/seller.ts",
+    "buyer": "tsx src/buyer.ts"
+  },
+  "dependencies": {
+    "@circle-fin/x402-batching": "3.0.4",
+    "@x402/core": "^2.15.0",
+    "@x402/evm": "^2.3.0",
+    "@x402/express": "^2.15.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
+  }
+}

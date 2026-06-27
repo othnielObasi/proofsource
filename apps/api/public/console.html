@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Console</title>
+<link rel="stylesheet" href="/app.css" />
+<style>
+  .layout{display:grid;grid-template-columns:248px minmax(0,1fr) 340px;gap:20px}
+  .ask{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 16px;margin-bottom:14px}
+  .ask .q{flex:1;font-family:Fraunces,serif;font-size:17px;color:var(--text);background:transparent;border:none;outline:none}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{font-size:12px;color:var(--mut);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600;padding:0 10px 8px}
+  td{padding:10px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+  tr.pick td{background:#0f1a22}
+  .src .t{font-family:Fraunces,serif;font-size:14px} .src .a{font-size:11.5px;color:var(--mut)}
+  .relbar{height:6px;border-radius:5px;background:#0a0e16;border:1px solid var(--line);overflow:hidden;min-width:80px}
+  .relbar i{display:block;height:100%;background:linear-gradient(90deg,#34546d,var(--buy))}
+  .chip2{font-size:11px;padding:3px 8px;border-radius:6px}
+  .c-buy{background:#13384a;color:var(--buy)} .c-skip{background:#26221a;color:var(--skip)} .c-block{background:#2a1c1b;color:var(--block)}
+  .steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .step{font-size:11.5px;color:var(--mut);background:#0e1622;border:1px solid var(--line);border-radius:6px;padding:5px 9px}
+  .step.gate{border-color:#2c5a70;color:var(--buy)}
+  .answer{font-family:Fraunces,serif;font-size:15px;line-height:1.6}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+  .row:first-child{border:0} .row span{color:var(--mut)} .row b{font-family:"JetBrains Mono",monospace;font-weight:500}
+  .meter{height:7px;border-radius:6px;background:#0a0e16;border:1px solid var(--line);overflow:hidden;margin:6px 0}
+  .meter i{display:block;height:100%;background:linear-gradient(90deg,#33506b,var(--buy))}
+  .receipt{background:var(--paper);color:var(--paper-ink);border-radius:11px;padding:16px;font-family:"JetBrains Mono",monospace;margin-top:14px}
+  .receipt .lab{font-size:9px;letter-spacing:.16em;color:var(--paper-mut)}
+  .receipt .title{font-family:Fraunces,serif;font-size:14px;font-weight:600;margin:3px 0 10px}
+  .receipt .kv{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;color:var(--paper-mut)}
+  .receipt .kv b{color:var(--paper-ink)}
+  @media(max-width:1000px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header id="ps-header" class="ps-header"></header>
+<div class="wrap">
+  <div class="layout">
+    <!-- mandate -->
+    <div>
+      <div class="card">
+        <p class="eyebrow">Your mandate</p>
+        <div class="muted" style="font-size:12px">Budget remaining</div>
+        <div class="meter"><i id="budgetbar" style="width:100%"></i></div>
+        <div class="row"><span>Budget</span><b id="mBudget">—</b></div>
+        <div class="row"><span>Per-task ceiling</span><b id="mCeil">—</b></div>
+        <div class="row"><span>Max / source</span><b id="mMax">—</b></div>
+        <div class="row"><span>Require citation</span><b id="mReq">—</b></div>
+        <p class="hint" style="margin-top:12px">The rules your agent obeys. Creators price their work; you set the budget and policy; the agent only chooses which permitted source is worth paying for.</p>
+      </div>
+    </div>
+    <!-- run -->
+    <div>
+      <div class="ask"><input class="q" id="q" placeholder="Ask your research agent…" value="What are the key arguments around AI content licensing and creator compensation?" /><button class="btn primary sm" onclick="run()">Run</button></div>
+      <div class="chips">
+        <span class="chip" onclick="setq('How should music royalties be split by what listeners played?')">music royalties</span>
+        <span class="chip" onclick="setq('How can citizen journalism be funded per story?')">journalism</span>
+        <span class="chip" onclick="setq('What is the best sourdough bread recipe?')">⊘ off-topic</span>
+      </div>
+      <div id="out"><div class="card muted">Ask a question to see your agent decide, pay, and cite.</div></div>
+    </div>
+    <!-- proof -->
+    <div>
+      <div class="card"><p class="eyebrow">This run</p>
+        <div class="row"><span>Decision</span><b id="rAction">—</b></div>
+        <div class="row"><span>Settled</span><b id="rSpend">—</b></div>
+        <div class="row"><span>Verification</span><b id="rVer">—</b></div>
+      </div>
+      <div id="receipt"></div>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+const $=(id)=>document.getElementById(id);
+let me=null;
+function setq(t){$("q").value=t;}
+async function init(){
+  me=await PS.requireAuth('operator'); if(!me) return;
+  await PS.header('console');
+  // ensure there's content to buy: ingest sample if catalog is empty-ish (idempotent)
+  await fetch('/v1/proofsource/connectors/rss/ingest',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sample:true})});
+  loadMandate();
+}
+async function loadMandate(){
+  const m=await (await fetch('/v1/proofsource/mandate?workspaceId='+me.workspaceId)).json();
+  $("mBudget").textContent='$'+Number(m.budgetUsdc).toFixed(2);
+  $("mCeil").textContent='$'+Number(m.perTaskMaxUsdc).toFixed(2);
+  $("mMax").textContent='$'+Number(m.maxPricePerSourceUsdc||0).toFixed(2);
+  $("mReq").textContent=m.requireCitation?'yes':'no';
+}
+async function run(){
+  $("out").innerHTML='<div class="card muted">Running…</div>';
+  const d=await (await fetch('/v1/proofsource/demo/research-agent/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({workspaceId:me.workspaceId,agentId:'agent_'+me.id.slice(0,6),question:$("q").value})})).json();
+  const scores=(d.decision.scores||[]).map(s=>{
+    const chip=s.blocked?'c-block':(/^bought|^reused/.test(s.verdict||'')?'c-buy':'c-skip');
+    return `<tr class="${(s.verdict||'').startsWith('bought')||(s.verdict||'').startsWith('reused')?'pick':''}"><td><div class="src"><div class="t">${(s.title||s.resourceId).slice(0,40)}</div></div></td><td><div style="display:flex;gap:8px;align-items:center"><div class="relbar"><i style="width:${(s.relevance*100)|0}%"></i></div><span class="mono muted" style="font-size:12px">${(s.relevance*100)|0}%</span></div></td><td class="mono" style="font-size:12px">$${s.priceUsdc}</td><td><span class="chip2 ${chip}">${(s.verdict||'').split(':')[0]}</span></td></tr>`;
+  }).join('');
+  const badge=d.decision.action==='BUY'?'b-buy':d.decision.action==='REUSE'?'b-reuse':'b-skip';
+  $("out").innerHTML=`
+    <div class="card"><span class="badge ${badge}">${d.decision.action}</span>
+      <p class="muted" style="font-size:13px;margin:8px 0 0">${d.decision.reasoning}</p>
+      <table><tr><th>source</th><th>relevance</th><th>price</th><th>verdict</th></tr>${scores}</table></div>
+    <div class="card" style="margin-top:12px"><p class="eyebrow">Lifecycle</p><div class="steps">${
+      d.trace.map(s=>`<span class="step ${s.step==='verify'?'gate':''}">${s.step}${s.step==='verify'?' ✓':''}</span>`).join('')
+    }</div></div>
+    <div class="card" style="margin-top:12px"><p class="eyebrow">Answer</p><div class="answer">${d.answer}</div></div>`;
+  $("rAction").textContent=d.decision.action; $("rAction").style.color=d.decision.action==='BUY'?'var(--buy)':d.decision.action==='REUSE'?'var(--reuse)':'var(--skip)';
+  $("rSpend").textContent='$'+Number(d.spend.totalUsdc).toFixed(6);
+  $("rVer").textContent=d.sources[0]&&d.sources[0].receiptId?'passed':(d.decision.action==='BUY'?'—':'n/a');
+  $("rVer").style.color='var(--earned)';
+  const s=d.sources[0];
+  $("receipt").innerHTML = (s&&s.receiptId)?`<div class="receipt"><div class="lab">PROOF OF CITATION</div><div class="title">paid ${s.providerName}</div><div class="kv"><span>amount</span><b>$${Number(d.spend.totalUsdc).toFixed(6)}</b></div><div class="kv"><span>delivery</span><b>${String(s.deliveryHash||'').replace('sha256:','').slice(0,14)}…</b></div><div class="kv"><span>receipt</span><b>${String(s.receiptId).slice(0,16)}</b></div></div>`:'';
+  loadMandate();
+}
+init();
+</script>
+</body>
+</html>

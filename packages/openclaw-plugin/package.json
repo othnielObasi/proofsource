@@ -1,0 +1,11 @@
+{
+  "name": "@proofsource/openclaw-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Let your OpenClaw assistant pay creators per citation in USDC on Arc.",
+  "dependencies": { "@proofsource/sdk": "*" },
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "compat": { "pluginApi": ">=2026.6.0", "minGatewayVersion": "2026.6.0" }
+  }
+}

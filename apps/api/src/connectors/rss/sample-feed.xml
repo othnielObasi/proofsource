@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>The Independent Ledger</title>
+    <link>https://rsshub.app/example/independent-ledger</link>
+    <description>Independent reporting on AI, media and money.</description>
+    <item>
+      <title>AI content licensing and creator compensation: where the fight stands</title>
+      <link>https://independentledger.example/ai-licensing</link>
+      <guid>https://independentledger.example/ai-licensing</guid>
+      <dc:creator>Maya Okonkwo</dc:creator>
+      <pubDate>Fri, 13 Jun 2026 09:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>AI content licensing now turns on three contested questions: whether training on copyrighted work is fair use, how creators are compensated when models ground answers in their work, and whether per-use settlement can replace blanket licensing. Advocates of per-citation pay argue a source should earn every time an agent grounds an answer in it, not once at training time. The hard part remains proving reuse and attaching payment to it.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Why subscriptions priced out the five-cent article</title>
+      <link>https://independentledger.example/five-cent-article</link>
+      <guid>https://independentledger.example/five-cent-article</guid>
+      <dc:creator>Daniel Reyes</dc:creator>
+      <pubDate>Wed, 11 Jun 2026 14:30:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>For as long as a payment could not clear below roughly thirty cents after fees, a five-cent article could not be sold on its own, so everything was bundled into a monthly subscription. Removing the payment floor makes the smallest unit sellable for the first time, which changes what independent creators can charge for.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Citizen journalism funding when readers pay per story</title>
+      <link>https://independentledger.example/citizen-journalism</link>
+      <guid>https://independentledger.example/citizen-journalism</guid>
+      <dc:creator>Priya Nair</dc:creator>
+      <pubDate>Thu, 12 Jun 2026 10:15:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Local and citizen journalism has struggled because a single story rarely justifies a subscription, and ad revenue collapsed. Per-story micropayments let a reporter earn from the thousand places a story travels, with readers paying a few cents for the pieces they actually open rather than pledging monthly to outlets they rarely read.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Music royalties split by what listeners actually played</title>
+      <link>https://independentledger.example/music-royalties</link>
+      <guid>https://independentledger.example/music-royalties</guid>
+      <dc:creator>Tomas Vidal</dc:creator>
+      <pubDate>Tue, 10 Jun 2026 16:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Streaming platforms pool every subscription and pay artists pro rata, so listeners mostly fund whoever is globally popular rather than who they played. User-centric royalties split a listener's payment across the artists they actually heard, settled per listen, with play-gating so an early skip costs nothing. Direct sub-cent settlement makes the model practical.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Per-image licensing and instant photographer payouts</title>
+      <link>https://independentledger.example/photo-licensing</link>
+      <guid>https://independentledger.example/photo-licensing</guid>
+      <dc:creator>Hannah Berg</dc:creator>
+      <pubDate>Mon, 09 Jun 2026 11:45:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Licensing a single photograph has been clumsy and slow, so most images are used without payment or attribution. Attaching a price to an individual image and settling instantly to the photographer named in the file turns licensing into a one-click action, and recursive splits pay every collaborator the file's metadata already records.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Streaming payments by the second for live media</title>
+      <link>https://independentledger.example/streaming-payments</link>
+      <guid>https://independentledger.example/streaming-payments</guid>
+      <dc:creator>Marcus Lowe</dc:creator>
+      <pubDate>Sun, 08 Jun 2026 13:20:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Live media is continuous, so the natural unit of payment is the second, not a flat ticket. Continuous-authorization streaming lets a viewer approve a spending rate and pay only for the time they were present, with revenue accruing live and splitting across everyone on the stream. Sub-second finality and gasless batching make per-second settlement viable.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Attribution metadata as the payout rule for collaborative work</title>
+      <link>https://independentledger.example/attribution-splits</link>
+      <guid>https://independentledger.example/attribution-splits</guid>
+      <dc:creator>Maya Okonkwo</dc:creator>
+      <pubDate>Sat, 14 Jun 2026 08:30:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Collaborative content already records who did what: track credits, photo provenance, editor lists. Reading that lineage graph turns attribution metadata into settlement logic, so a remix of a remix pays every ancestor automatically and an edited photo pays the original photographer. Recursive, automatic splits replace the manual reconciliation creators do today.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Surface-code roadmaps for 2026 (control source)</title>
+      <link>https://independentledger.example/quantum-2026</link>
+      <guid>https://independentledger.example/quantum-2026</guid>
+      <dc:creator>Lin Wei</dc:creator>
+      <pubDate>Mon, 02 Jun 2026 08:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Surface-code thresholds and logical qubit overheads, with 2026 roadmap comparisons across hardware platforms. Included as an off-topic control to test the agent's relevance filtering.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>A field guide to alpine wildflowers (control source)</title>
+      <link>https://independentledger.example/wildflowers</link>
+      <guid>https://independentledger.example/wildflowers</guid>
+      <dc:creator>Greta Olsen</dc:creator>
+      <pubDate>Fri, 30 May 2026 09:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Identifying alpine wildflowers by petal count, leaf shape, and elevation band. Included as an off-topic control the agent should decline for finance and media questions.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

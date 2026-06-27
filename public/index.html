@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — the settlement floor for AI-cited knowledge</title>
+<!--
+  ProofSource redesign · "The Settlement Floor"
+  ------------------------------------------------------------------
+  DIRECTION (decided): elevate the dark/editorial brand into a live,
+  production-grade settlement terminal. Sacred motif kept: the glow + blueprint
+  grid canvas. Carried forward because they're load-bearing for the product:
+  the five decision colors (semantic), the paper receipt (signature), Fraunces
+  editorial serif, JetBrains Mono ledger figures.
+  WHAT'S NEW vs the original standalone:
+   · a persistent live settlement TICKER (citations → payments, streaming)
+   · animated COUNTERS (paid to creators, payments/min, avg sub-cent)
+   · a two-column hero: editorial statement (L) + live settlement MONITOR (R)
+   · an interactive DEMO where a question lights up the pipeline node-by-node
+     and a receipt PRINTS + tears off
+   · balanced creator/operator doors, a lit "how it works" rail
+  Consumes the ProofSource design system (../styles.css tokens). Interactive,
+  lively motion, clickable. Single-file-per-concern React (Babel) prototype.
+-->
+<link rel="stylesheet" href="./styles.css" />
+<style>
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--canvas);background-attachment:fixed;
+    color:var(--text);font-family:var(--font-sans);font-size:14px;letter-spacing:-.005em;
+  }
+  /* sacred motif: blueprint grid over the glow canvas */
+  body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.12;
+    background-image:var(--grid-image);background-size:var(--grid-size);
+    -webkit-mask-image:var(--grid-mask);mask-image:var(--grid-mask)}
+  #root{position:relative;z-index:1}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(91,192,235,.28)}
+  mark{background:rgba(84,180,136,.16);color:#DDFBE9;border-bottom:1px solid rgba(84,180,136,.45);padding:1px 4px;border-radius:4px}
+
+  /* scrollbar */
+  *::-webkit-scrollbar{width:11px;height:11px}
+  *::-webkit-scrollbar-thumb{background:#1d2738;border:3px solid transparent;background-clip:padding-box;border-radius:99px}
+  *::-webkit-scrollbar-thumb:hover{background:#2a3854;background-clip:padding-box}
+
+  /* page enter — opacity-safe (never traps content hidden) */
+  .page{animation:pageIn .45s var(--ease)}
+  @keyframes pageIn{from{transform:translateY(8px)}to{transform:none}}
+
+  /* app-mode: flat dark background, no glow/grid — sidebar handles its own bg */
+  .app-mode{background:#080C12 !important;background-attachment:initial !important}
+  .app-mode:before{display:none !important}
+  #boot{position:fixed;inset:0;display:grid;place-items:center;z-index:2;color:var(--faint);font-family:var(--font-mono);font-size:12px;letter-spacing:.1em}
+  #boot .b{display:flex;align-items:center;gap:9px}
+  #boot .d{width:8px;height:8px;border-radius:99px;background:var(--earned);box-shadow:var(--glow-earned);animation:bp 1.3s infinite}
+  @keyframes bp{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ---------- responsive ---------- */
+  @media(max-width:1080px){
+    .hero-grid{grid-template-columns:1fr !important;gap:32px !important}
+    .demo-layout{grid-template-columns:1fr !important}
+    .demo-mandate,.demo-proof{position:static !important}
+    .dev-grid,.proof-grid{grid-template-columns:1fr !important;gap:28px !important}
+    .integ-grid{grid-template-columns:1fr !important;gap:18px !important}
+  }
+  @media(max-width:820px){
+    .metrics-grid{grid-template-columns:1fr 1fr !important;gap:22px !important}
+    .doors-grid,.sol-doors,.use-grid,.how-grid{grid-template-columns:1fr !important}
+    .how-rail{display:none !important}
+    .footer-grid{grid-template-columns:1fr 1fr !important;gap:24px !important}
+    .nav-links{display:none !important}
+    .ep-row{grid-template-columns:60px 1fr !important}
+    .ep-row span:last-child{grid-column:1 / -1}
+  }
+  @media(max-width:560px){
+    .metrics-grid{grid-template-columns:1fr 1fr !important}
+    .footer-grid{grid-template-columns:1fr !important}
+    .nav-signin{display:none !important}
+  }
+</style>
+</head>
+<body>
+<div id="boot"><div class="b"><span class="d"></span> INITIALIZING SETTLEMENT FLOOR…</div></div>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#0B0F17"/>
+    <rect x="30" y="26" width="40" height="48" rx="4" fill="#F2EBDD"/>
+    <rect x="36" y="34" width="20" height="3" rx="1.5" fill="#2A2620"/>
+    <rect x="36" y="42" width="28" height="2" rx="1" fill="#7A7160"/>
+    <rect x="36" y="48" width="28" height="2" rx="1" fill="#7A7160"/>
+    <rect x="36" y="58" width="16" height="6" rx="1" fill="#54B488"/>
+    <circle cx="50" cy="18" r="3" fill="#54B488"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="./data.js"></script>
+<script src="./store.js"></script>
+<script type="text/babel" src="./ui.jsx"></script>
+<script type="text/babel" src="./home.jsx"></script>
+<script type="text/babel" src="./demo.jsx"></script>
+<script type="text/babel" src="./pages.jsx"></script>
+<script type="text/babel" src="./auth.jsx"></script>
+<script type="text/babel" src="./console.jsx"></script>
+<script type="text/babel" src="./creator.jsx"></script>
+<script type="text/babel" src="./traction.jsx"></script>
+<script type="text/babel" src="./app.jsx"></script>
+</body>
+</html>

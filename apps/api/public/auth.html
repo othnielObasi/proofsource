@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Sign in</title>
+<link rel="stylesheet" href="/app.css" />
+<style>
+  .auth{max-width:440px;margin:46px auto;padding:0 22px}
+  .auth h1{font-family:Fraunces,serif;font-weight:600;font-size:28px;margin:0 0 6px;text-align:center}
+  .auth .sub{color:var(--mut);text-align:center;margin:0 0 24px;font-size:14px}
+  .roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .role{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;cursor:pointer;text-align:center}
+  .role.on{border-color:#2c5a70;background:#0f1a22}
+  .role .t{font-family:Fraunces,serif;font-size:15px} .role.on.creator .t{color:var(--earned)} .role.on.operator .t{color:var(--buy)}
+  .role .d{font-size:11.5px;color:var(--mut);margin-top:3px}
+  .switch{text-align:center;margin-top:16px;color:var(--mut);font-size:13px}
+  .switch a{cursor:pointer}
+</style>
+</head>
+<body>
+<header id="ps-header" class="ps-header"></header>
+<div class="auth">
+  <h1 id="title">Create your account</h1>
+  <p class="sub" id="sub">Start earning when AI cites your work.</p>
+  <div class="card">
+    <div id="roleWrap">
+      <label>I am a…</label>
+      <div class="roles">
+        <div class="role creator on" id="roleCreator" onclick="setRole('creator')"><div class="t">Creator</div><div class="d">writer / publisher — get paid</div></div>
+        <div class="role operator" id="roleOperator" onclick="setRole('operator')"><div class="t">Operator</div><div class="d">run an agent — pay sources</div></div>
+      </div>
+    </div>
+    <div id="nameWrap"><label>Name or publication</label><input id="name" type="text" placeholder="e.g. Maya Okonkwo" /></div>
+    <label>Email</label><input id="email" type="email" placeholder="you@example.com" />
+    <label>Password</label><input id="password" type="password" placeholder="at least 6 characters" />
+    <button class="btn primary" style="width:100%;margin-top:20px" id="submit" onclick="go()">Create account</button>
+    <div id="msg" style="margin-top:14px"></div>
+  </div>
+  <div class="switch" id="switch"></div>
+</div>
+<script src="/app.js"></script>
+<script>
+const q=new URLSearchParams(location.search);
+let mode=q.get('mode')==='create'?'create':(q.get('mode')==='signin'?'signin':'create');
+let role=q.get('role')==='operator'?'operator':'creator';
+const $=(id)=>document.getElementById(id);
+function setRole(r){role=r;$("roleCreator").classList.toggle('on',r==='creator');$("roleOperator").classList.toggle('on',r==='operator');
+  $("sub").textContent = r==='creator'?'Start earning when AI cites your work.':'Give your agent a budget and let it pay sources.';}
+function render(){
+  const create = mode==='create';
+  $("title").textContent = create?'Create your account':'Welcome back';
+  $("roleWrap").style.display = create?'block':'none';
+  $("nameWrap").style.display = create?'block':'none';
+  $("submit").textContent = create?'Create account':'Sign in';
+  $("sub").style.display = create?'block':'none';
+  $("switch").innerHTML = create
+    ? `Already have an account? <a onclick="toggle('signin')">Sign in</a>`
+    : `New here? <a onclick="toggle('create')">Create an account</a>`;
+  setRole(role);
+}
+function toggle(m){mode=m;render();}
+async function go(){
+  const email=$("email").value.trim(), password=$("password").value;
+  $("msg").innerHTML='';
+  $("submit").disabled=true;
+  try{
+    let r;
+    if(mode==='create'){
+      const name=$("name").value.trim();
+      if(!name){fail('Please enter your name.');return;}
+      r=await fetch('/v1/proofsource/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,email,password,role})});
+    } else {
+      r=await fetch('/v1/proofsource/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password})});
+    }
+    const d=await r.json();
+    if(!r.ok){fail(d.error||'Something went wrong');return;}
+    PS.setToken(d.token);
+    location.href = d.account.role==='creator' ? '/creator.html' : '/console.html';
+  }catch(e){fail(e.message);}
+}
+function fail(m){$("msg").innerHTML=`<div class="err">${m}</div>`;$("submit").disabled=false;}
+PS.header(); render();
+</script>
+</body>
+</html>

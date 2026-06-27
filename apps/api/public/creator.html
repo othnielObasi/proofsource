@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Your earnings</title>
+<link rel="stylesheet" href="/app.css" />
+<style>
+  .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+  .hero .l{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .hero .big{font-family:Fraunces,serif;font-size:52px;font-weight:600;letter-spacing:-0.02em;color:var(--earned);line-height:1}
+  .hero .sub{color:var(--mut);font-size:13px;margin-top:6px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px}
+  .kpi .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .kpi .v{font-family:Fraunces,serif;font-size:25px;font-weight:600;margin-top:6px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse;background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600;padding:11px 15px}
+  td{padding:12px 15px;border-top:1px solid var(--line);font-size:13px}
+  td.n{font-family:"JetBrains Mono",monospace;text-align:right;color:var(--earned)}
+  .cite{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+  .cite .t{font-family:Fraunces,serif;font-size:14px}
+  .cite .m{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--mut)}
+  .cite .amt{color:var(--earned);font-family:"JetBrains Mono",monospace}
+  .cite .proof{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--faint);margin-top:6px}
+  .empty{color:var(--mut);background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center}
+  .wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:18px}
+  .wallet .ic{width:34px;height:34px;border-radius:9px;background:#10231b;border:1px solid #1f4636;display:grid;place-items:center;color:var(--earned)}
+  .wallet .grow{flex:1;min-width:160px}
+  .wallet .addr{font-family:"JetBrains Mono",monospace;font-size:13px}
+  .listbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+  .listbar input{flex:1;min-width:200px}
+  @media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header id="ps-header" class="ps-header"></header>
+<div class="wrap">
+  <!-- wallet -->
+  <div class="wallet" id="wallet"><div class="ic">◈</div><div class="grow"><div class="muted" style="font-size:12px">Payout wallet</div><div class="addr" id="walletAddr">checking…</div></div><div id="walletBtns"></div></div>
+
+  <!-- list work -->
+  <div class="listbar">
+    <input id="feed" type="url" placeholder="Connect a feed to list more work — https://yourblog.com/rss or an RSSHub route" />
+    <input id="price" type="text" value="0.002" style="max-width:110px" />
+    <button class="btn primary sm" onclick="connectFeed(false)">List feed</button>
+    <button class="btn ghost sm" onclick="connectFeed(true)">Try sample</button>
+  </div>
+  <div id="listMsg"></div>
+
+  <!-- earnings -->
+  <div class="hero">
+    <div><div class="l">Total earned</div><div class="big" id="total">$0.00</div><div class="sub">from verified AI citations of your work</div></div>
+    <button class="btn earn" onclick="withdraw()">Withdraw</button>
+  </div>
+  <div class="grid">
+    <div class="card kpi"><div class="l">Citations paid</div><div class="v" id="citations">—</div></div>
+    <div class="card kpi"><div class="l">Avg per citation</div><div class="v" id="avg">—</div></div>
+    <div class="card kpi"><div class="l">Pieces listed</div><div class="v" id="pieces">—</div></div>
+    <div class="card kpi"><div class="l">Settlement</div><div class="v" id="mode" style="font-size:18px">—</div></div>
+  </div>
+  <div class="cols">
+    <div><h3>Your pieces</h3><table><thead><tr><th>Piece</th><th>Citations</th><th style="text-align:right">Earned</th></tr></thead><tbody id="pieceRows"><tr><td colspan="3" class="muted">loading…</td></tr></tbody></table></div>
+    <div><h3>Recent citations — your proof of earning</h3><div id="recent"><div class="empty">loading…</div></div></div>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+const $=(id)=>document.getElementById(id);
+let me=null;
+function usd(n){return '$'+Number(n).toFixed(6);}
+async function init(){
+  me = await PS.requireAuth('creator'); if(!me) return;
+  await PS.header('creator');
+  renderWallet();
+  load();
+  setInterval(load, 5000);
+}
+function renderWallet(){
+  if(me.walletAddress){
+    $("walletAddr").textContent = me.walletAddress.slice(0,12)+'…'+me.walletAddress.slice(-6)+(me.walletKind==='managed'?'  (managed for you)':'');
+    $("walletBtns").innerHTML = `<button class="btn ghost sm" onclick="connectWallet()">Change</button>`;
+  } else {
+    $("walletAddr").textContent = 'not connected — connect to receive payouts';
+    $("walletBtns").innerHTML = `<button class="btn primary sm" onclick="connectWallet()">Connect wallet</button> <button class="btn ghost sm" onclick="managedWallet()">Create one for me</button>`;
+  }
+}
+async function connectWallet(){
+  let addr='';
+  if(window.ethereum){
+    try{ const acc=await window.ethereum.request({method:'eth_requestAccounts'}); addr=acc&&acc[0]; }catch(e){ /* user rejected */ }
+  }
+  if(!addr){ addr=prompt('Paste your USDC wallet address on Arc (0x…):')||''; if(!addr) return; }
+  const r=await (await fetch('/v1/proofsource/auth/wallet',{method:'POST',headers:{'content-type':'application/json',...PS.authHeaders()},body:JSON.stringify({walletAddress:addr,kind:'connected'})})).json();
+  if(r.error){alert(r.error);return;} me=r; renderWallet(); PS.header('creator');
+}
+async function managedWallet(){
+  const r=await (await fetch('/v1/proofsource/auth/wallet',{method:'POST',headers:{'content-type':'application/json',...PS.authHeaders()},body:JSON.stringify({kind:'managed'})})).json();
+  if(r.error){alert(r.error);return;} me=r; renderWallet(); PS.header('creator');
+}
+async function connectFeed(sample){
+  const body = sample?{sample:true,priceUsdc:$("price").value.trim()}:{feedUrl:$("feed").value.trim(),priceUsdc:$("price").value.trim()};
+  if(!sample && !body.feedUrl){$("listMsg").innerHTML='<div class="err">Enter a feed URL or use the sample.</div>';return;}
+  $("listMsg").innerHTML='<div class="muted" style="font-size:13px">Listing…</div>';
+  const r=await (await fetch('/v1/proofsource/creators/connect-feed',{method:'POST',headers:{'content-type':'application/json',...PS.authHeaders()},body:JSON.stringify(body)})).json();
+  $("listMsg").innerHTML = r.error?`<div class="err">${r.error}</div>`:`<div class="ok">Listed ${r.listed} piece(s). Agents can now cite — and pay — for your work.</div>`;
+  load();
+}
+async function load(){
+  if(!me||!me.providerId) return;
+  const m=await (await fetch(`/v1/proofsource/creators/${me.providerId}/earnings`)).json();
+  if(m.error) return;
+  $("total").textContent='$'+Number(m.totalEarnedUsdc).toFixed(4);
+  $("citations").textContent=m.citations; $("avg").textContent=usd(m.avgPerCitationUsdc);
+  $("pieces").textContent=m.listedPieces; $("mode").textContent=m.paymentMode==='arc_testnet'?'Arc · live':'mock';
+  $("pieceRows").innerHTML=m.perPiece.length?m.perPiece.map(p=>`<tr><td>${p.title}</td><td class="mono muted">${p.citations}×</td><td class="n">${Number(p.earningsUsdc).toFixed(6)}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">No citations yet.</td></tr>';
+  $("recent").innerHTML=m.recent.length?m.recent.map(c=>`<div class="cite"><div class="t">${c.title}</div><div class="m"><span>An AI agent cited this${c.at?' · '+new Date(c.at).toLocaleString():''}</span><span class="amt">+${Number(c.amountUsdc).toFixed(6)}</span></div><div class="proof">receipt ${String(c.receiptHash).replace('sha256:','').slice(0,16)}…${c.transaction?` · tx ${String(c.transaction).slice(0,12)}…`:''}${c.explorerUrl?` · <a href="${c.explorerUrl}">explorer ↗</a>`:''}</div></div>`).join(''):'<div class="empty">No citations yet — list your work, then once an agent grounds an answer in it, it appears here with a receipt.</div>';
+}
+function withdraw(){alert('Withdrawal routes your USDC balance from the Circle Gateway to your wallet. Wired for deploy; settles on Arc.');}
+init();
+</script>
+</body>
+</html>

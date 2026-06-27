@@ -1,0 +1,2734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — Content that earns every time AI cites it</title>
+<style>
+:root{
+  --ink:#0B0F17;
+  --ink2:#0E1420;
+  --panel:#151D2B;
+  --panel2:#1B2434;
+  --line:#273141;
+  --line-soft:rgba(231,236,243,.10);
+  --mut:#8A97AC;
+  --faint:#5E6B80;
+  --text:#E7ECF3;
+  --buy:#5BC0EB;
+  --earned:#54B488;
+  --earned2:#7AE0AD;
+  --skip:#E0A458;
+  --paper:#F2EBDD;
+  --paper2:#FFF7E8;
+  --paper-line:#D8CDB8;
+  --paper-ink:#2A2620;
+  --paper-mut:#7A7160;
+  --danger:#E06A5E;
+  --shadow:0 32px 90px rgba(0,0,0,.38);
+  --max:1120px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(760px 460px at 68% 30%, rgba(84,180,136,.11), transparent 65%),
+    radial-gradient(620px 420px at 36% 22%, rgba(91,192,235,.08), transparent 68%),
+    linear-gradient(180deg,#06080D 0%,#0B0F17 46%,#070A10 100%);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  letter-spacing:-0.005em;
+}
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.12;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size:58px 58px;
+  mask-image:linear-gradient(to bottom, black 0%, transparent 68%);
+}
+a{color:var(--buy);text-decoration:none}
+button{font:inherit}
+.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.serif{font-family:Georgia,"Times New Roman",serif}
+.muted{color:var(--mut)}
+.faint{color:var(--faint)}
+.screen{display:none}
+.screen.on{display:block}
+
+/* Top page switcher: deliberately text-only, not boxy */
+.sw{
+  position:sticky;
+  top:0;
+  z-index:30;
+  display:flex;
+  gap:22px;
+  align-items:center;
+  min-height:46px;
+  padding:8px 24px;
+  border-bottom:1px solid var(--line);
+  background:rgba(7,10,16,.9);
+  backdrop-filter:blur(12px);
+  overflow-x:auto;
+  white-space:nowrap;
+}
+.sw b{font-family:Georgia,"Times New Roman",serif;font-size:17px;letter-spacing:-.035em}
+.sw .tag{
+  color:var(--skip);
+  font-size:11px;
+  border:1px solid rgba(224,164,88,.35);
+  border-radius:999px;
+  padding:2px 8px;
+  margin-right:10px;
+}
+.sw button{
+  position:relative;
+  border:0;
+  background:transparent;
+  color:var(--mut);
+  padding:8px 0 10px;
+  margin:0;
+  cursor:pointer;
+  font-size:13px;
+  line-height:1;
+}
+.sw button:hover,.sw button.on{color:var(--text)}
+.sw button.on:after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:2px;
+  border-radius:999px;
+  background:var(--earned);
+  box-shadow:0 0 18px rgba(84,180,136,.42);
+}
+
+/* Shared header */
+.ps-header{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:15px 26px;
+  border-bottom:1px solid var(--line);
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:rgba(11,15,23,.88);
+  backdrop-filter:blur(12px);
+}
+.ps-header .brand{display:flex;align-items:baseline;gap:9px;color:var(--text)}
+.ps-header .brand b{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:18px;letter-spacing:-.04em}
+.ps-header .brand span{color:var(--mut);font-size:12px}
+.ps-nav{display:flex;align-items:center;gap:18px;margin-left:auto}
+.ps-nav a{color:var(--mut);font-size:13px}
+.ps-nav a:hover,.ps-nav a.active{color:var(--text)}
+.ps-nav .who{color:var(--faint);font-size:12px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:9px;
+  padding:11px 18px;
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  font-weight:650;
+  font-size:14px;
+  cursor:pointer;
+  transition:filter .16s ease,border-color .16s ease,transform .06s ease;
+}
+.btn:hover{border-color:var(--mut)}
+.btn:active{transform:translateY(1px)}
+.btn.sm{padding:8px 13px;font-size:13px}
+.btn.primary{background:var(--buy);color:#04222e;border-color:transparent}
+.btn.earn{background:var(--earned);color:#04210f;border-color:transparent}
+.btn.primary:hover,.btn.earn:hover{filter:brightness(1.08);border-color:transparent}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mut);padding-left:8px;padding-right:8px}
+.btn.ghost:hover{color:var(--text)}
+
+.wrap{max-width:var(--max);margin:0 auto;padding:26px}
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--ink2));
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:18px;
+}
+.eyebrow{
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--faint);
+  font-weight:800;
+  margin:0 0 12px;
+}
+label{
+  display:block;
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--faint);
+  font-weight:700;
+  margin:16px 0 7px;
+}
+input{
+  width:100%;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 14px;
+  color:var(--text);
+  font:inherit;
+  font-size:14px;
+}
+.hint{font-size:12px;color:var(--faint);margin-top:6px}
+
+/* LANDING */
+.hero{
+  max-width:940px;
+  margin:0 auto;
+  padding:62px 24px 58px;
+  text-align:center;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-size:12px;
+  color:var(--mut);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:6px 13px;
+  margin-bottom:24px;
+  background:rgba(21,29,43,.26);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--earned);box-shadow:0 0 18px rgba(84,180,136,.68)}
+.hero h1{
+  font-family:Georgia,"Times New Roman",serif;
+  font-weight:700;
+  font-size:clamp(38px,6.8vw,66px);
+  line-height:1.02;
+  letter-spacing:-0.055em;
+  margin:0 0 18px;
+}
+.hero h1 em{font-style:normal;color:var(--earned2)}
+.hero p{
+  font-size:18px;
+  color:var(--mut);
+  max-width:650px;
+  margin:0 auto 28px;
+}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* The headline moment */
+.proof-stage{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:0 26px 72px;
+}
+.stage-intro{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:24px;
+  align-items:end;
+  padding:0 0 22px;
+  border-bottom:1px solid var(--line-soft);
+}
+.stage-intro h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(30px,5vw,52px);
+  line-height:1.02;
+  letter-spacing:-.055em;
+  margin:0;
+  max-width:760px;
+}
+.stage-intro p{
+  margin:12px 0 0;
+  color:var(--mut);
+  max-width:680px;
+  font-size:16px;
+}
+.balance-chip{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  white-space:nowrap;
+}
+.balance-chip span{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.12em}
+.balance-chip strong{font-size:26px;color:var(--earned2)}
+.balance-delta{
+  color:var(--earned2);
+  font-size:11px;
+  opacity:.78;
+  min-height:16px;
+}
+.balance-chip strong.flash{animation:flashEarn .9s ease}
+@keyframes flashEarn{
+  0%{transform:translateY(0);filter:brightness(1)}
+  34%{transform:translateY(-3px);filter:brightness(1.45)}
+  100%{transform:translateY(0);filter:brightness(1)}
+}
+
+.transaction-theatre{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;
+  gap:54px;
+  align-items:center;
+  padding:46px 0 36px;
+}
+.transaction-theatre:before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(84,180,136,.38), rgba(91,192,235,.35), transparent);
+  opacity:.85;
+  pointer-events:none;
+}
+.transaction-left{
+  position:relative;
+  z-index:1;
+  min-height:430px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.ask-line{
+  padding:0 0 22px;
+  margin-bottom:24px;
+  border-bottom:1px solid var(--line-soft);
+}
+.ask-line .label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--faint);
+  font-weight:800;
+  margin-bottom:10px;
+}
+.ask-line .question{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(22px,3.4vw,34px);
+  letter-spacing:-.04em;
+  line-height:1.15;
+}
+.live-log{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:16px;
+}
+.live-log li{
+  display:grid;
+  grid-template-columns:64px 1fr;
+  gap:18px;
+  align-items:start;
+  opacity:.48;
+  transform:translateX(-4px);
+  transition:opacity .32s ease,transform .32s ease;
+}
+.live-log li.active{
+  opacity:1;
+  transform:translateX(0);
+}
+.live-log time{
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  color:var(--faint);
+  font-size:12px;
+  padding-top:2px;
+}
+.live-log strong{
+  display:block;
+  color:var(--text);
+  font-weight:750;
+  margin-bottom:3px;
+}
+.live-log span{
+  color:var(--mut);
+  font-size:13px;
+}
+.live-log b{color:var(--earned2)}
+.answer-preview{
+  margin-top:26px;
+  padding-top:20px;
+  border-top:1px solid var(--line-soft);
+}
+.answer-preview .label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--faint);
+  font-weight:800;
+  margin-bottom:9px;
+}
+.answer-preview p{
+  margin:0;
+  color:#B9C4D8;
+  max-width:750px;
+}
+.answer-preview mark{
+  background:rgba(84,180,136,.14);
+  color:#DDFBE9;
+  border-bottom:1px solid rgba(84,180,136,.42);
+  padding:1px 4px;
+  border-radius:4px;
+}
+.receipt-wrap{
+  position:relative;
+  z-index:1;
+  display:grid;
+  place-items:center;
+  min-height:430px;
+}
+.receipt{
+  width:min(334px,100%);
+  color:var(--paper-ink);
+  background:
+    linear-gradient(90deg,transparent 0 12px,rgba(0,0,0,.055) 13px,transparent 14px calc(100% - 14px),rgba(0,0,0,.055) calc(100% - 13px),transparent calc(100% - 12px)),
+    linear-gradient(180deg,var(--paper2) 0%,var(--paper) 100%);
+  box-shadow:var(--shadow),0 0 0 1px rgba(255,255,255,.08);
+  transform:rotate(-1.6deg);
+  position:relative;
+  padding:22px 24px 24px;
+  border-radius:14px;
+}
+.receipt:after{
+  content:"";
+  position:absolute;
+  inset:10px 15px;
+  border:1px dashed rgba(0,0,0,.18);
+  pointer-events:none;
+}
+.receipt-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  position:relative;
+  z-index:1;
+  margin-bottom:17px;
+}
+.receipt-title{
+  font-family:Georgia,"Times New Roman",serif;
+  letter-spacing:-.055em;
+  font-weight:700;
+  font-size:20px;
+}
+.verified-stamp{
+  border:2px solid #1a7b5a;
+  color:#10664a;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.11em;
+  padding:5px 7px;
+  border-radius:2px;
+  transform:rotate(6deg);
+}
+.receipt-line{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:14px;
+  padding:9px 0;
+  border-bottom:1px dashed rgba(0,0,0,.16);
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:11px;
+}
+.receipt-line span:first-child{color:rgba(42,38,32,.58)}
+.receipt-line strong{text-align:right;color:var(--paper-ink)}
+.settle-big{
+  position:relative;
+  z-index:1;
+  margin:20px 0 8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:18px;
+}
+.settle-big span{
+  color:rgba(42,38,32,.58);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.09em;
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+.settle-big strong{
+  font-family:Georgia,"Times New Roman",serif;
+  color:#0c2d22;
+  font-size:44px;
+  letter-spacing:-.08em;
+  line-height:.9;
+}
+.receipt-hash{
+  position:relative;
+  z-index:1;
+  margin-top:20px;
+  padding-top:13px;
+  border-top:1px solid rgba(0,0,0,.2);
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  color:rgba(42,38,32,.64);
+  font-size:10px;
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+.receipt.pulse{animation:receiptPulse .8s ease}
+@keyframes receiptPulse{
+  0%{filter:brightness(1);transform:rotate(-1.6deg) scale(1)}
+  40%{filter:brightness(1.08);transform:rotate(-1.2deg) scale(1.018)}
+  100%{filter:brightness(1);transform:rotate(-1.6deg) scale(1)}
+}
+
+.rail{
+  padding:28px 0 0;
+  border-top:1px solid var(--line-soft);
+}
+.rail-line{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:0;
+}
+.rail-line:before{
+  content:"";
+  position:absolute;
+  left:7%;
+  right:7%;
+  top:13px;
+  height:2px;
+  background:rgba(255,255,255,.12);
+}
+.rail-progress{
+  position:absolute;
+  left:7%;
+  top:13px;
+  height:2px;
+  width:0%;
+  background:linear-gradient(90deg,var(--earned),var(--buy),var(--skip));
+  box-shadow:0 0 18px rgba(91,192,235,.28);
+  transition:width .5s ease;
+}
+.rail-step{
+  position:relative;
+  text-align:center;
+  padding-top:36px;
+}
+.rail-step:before{
+  content:"";
+  position:absolute;
+  top:6px;
+  left:50%;
+  width:16px;
+  height:16px;
+  transform:translateX(-50%);
+  border-radius:999px;
+  background:var(--ink);
+  border:2px solid rgba(255,255,255,.22);
+  box-shadow:0 0 0 8px rgba(255,255,255,.025);
+  transition:border-color .3s ease,box-shadow .3s ease,background .3s ease;
+}
+.rail-step.done:before{
+  background:var(--earned);
+  border-color:var(--earned);
+  box-shadow:0 0 22px rgba(84,180,136,.42);
+}
+.rail-step strong{
+  display:block;
+  font-family:Georgia,"Times New Roman",serif;
+  letter-spacing:-.035em;
+  font-size:18px;
+}
+.rail-step span{
+  display:block;
+  color:var(--mut);
+  font-size:12px;
+  max-width:128px;
+  margin:4px auto 0;
+}
+.stage-actions{
+  margin-top:26px;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.doors{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  max-width:880px;
+  margin:0 auto 70px;
+  padding:0 24px;
+}
+.door{
+  background:linear-gradient(180deg,var(--panel),var(--ink2));
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:24px;
+  transition:border-color .15s ease, transform .15s ease;
+}
+.door:hover{border-color:#33425a;transform:translateY(-1px)}
+.door h3{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:21px;
+  margin:0 0 8px;
+  letter-spacing:-.03em;
+}
+.door p{color:var(--mut);font-size:14px;margin:0 0 16px}
+.door.creator h3{color:var(--earned2)}
+.door.operator h3{color:var(--buy)}
+.linklike{color:var(--earned);font-weight:700;font-size:13px}.linklike.blue{color:var(--buy)}
+
+/* AUTH */
+.auth{max-width:440px;margin:40px auto;padding:0 22px}
+.auth h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:30px;margin:0 0 6px;text-align:center;letter-spacing:-.035em}
+.auth .sub{color:var(--mut);text-align:center;margin:0 0 22px;font-size:14px}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.role{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;text-align:center}
+.role.on{border-color:#2c5a70;background:#0f1a22}
+.role .t{font-family:Georgia,"Times New Roman",serif;font-size:15px}
+.role.on.creator .t{color:var(--earned)}
+.role .d{font-size:11.5px;color:var(--mut);margin-top:3px}
+
+
+.auth-note{
+  margin:0 0 14px;
+  padding:12px 14px;
+  border:1px solid rgba(91,192,235,.22);
+  border-radius:12px;
+  background:rgba(91,192,235,.055);
+  color:#B8D9EA;
+  font-size:13px;
+}
+.role{cursor:pointer;transition:border-color .16s ease,background .16s ease,transform .06s ease}
+.role:hover{border-color:#2c5a70}
+.login-options{display:grid;gap:12px;margin-top:18px}
+.login-card{
+  text-align:left;
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:15px;
+  background:linear-gradient(180deg,var(--panel),var(--ink2));
+  color:var(--text);
+  cursor:pointer;
+}
+.login-card:hover{border-color:#33425a}
+.login-card strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:18px;letter-spacing:-.03em;margin-bottom:4px}
+.login-card span{display:block;color:var(--mut);font-size:13px}
+.private-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--earned2);
+  border:1px solid rgba(84,180,136,.24);
+  background:rgba(84,180,136,.07);
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  margin-right:6px;
+}
+.private-badge:before{content:"";width:6px;height:6px;background:var(--earned);border-radius:50%;box-shadow:0 0 12px rgba(84,180,136,.6)}
+
+/* CREATOR */
+.wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:18px}
+.wallet .ic{width:34px;height:34px;border-radius:9px;background:#10231b;border:1px solid #1f4636;display:grid;place-items:center;color:var(--earned)}
+.wallet .grow{flex:1;min-width:160px}
+.wallet .addr{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:13px}
+.eh{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+.eh .l{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.eh .big{font-family:Georgia,"Times New Roman",serif;font-size:52px;font-weight:700;letter-spacing:-0.05em;color:var(--earned2);line-height:1}
+.eh .sub{color:var(--mut);font-size:13px;margin-top:6px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px}
+.kpi .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.kpi .v{font-family:Georgia,"Times New Roman",serif;font-size:25px;font-weight:700;margin-top:6px;letter-spacing:-.035em}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+h3.sec{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:0 0 12px}
+table{width:100%;border-collapse:collapse;background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;overflow:hidden}
+th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700;padding:11px 15px}
+td{padding:12px 15px;border-top:1px solid var(--line);font-size:13px}
+td.n{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;text-align:right;color:var(--earned2)}
+.cite{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+.cite .t{font-family:Georgia,"Times New Roman",serif;font-size:14px}
+.cite .m{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--mut)}
+.cite .amt{color:var(--earned2);font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.cite .proof{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:11px;color:var(--faint);margin-top:6px}
+
+/* CONSOLE */
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr) 320px;gap:18px}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.row:first-child{border:0}
+.row span{color:var(--mut)}
+.row b{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.ask{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 16px;margin-bottom:14px}
+.ask .q{flex:1;font-family:Georgia,"Times New Roman",serif;font-size:16px;color:var(--text);background:transparent;border:none;outline:none}
+.relbar{height:6px;border-radius:5px;background:#0a0e16;border:1px solid var(--line);overflow:hidden;min-width:70px}
+.relbar i{display:block;height:100%;background:linear-gradient(90deg,#34546d,var(--buy))}
+.badge{font-weight:700;font-size:12px;padding:4px 11px;border-radius:7px}
+.b-buy{background:#13384a;color:var(--buy)}
+.chip2{font-size:11px;padding:3px 8px;border-radius:6px}
+.c-buy{background:#13384a;color:var(--buy)}.c-skip{background:#26221a;color:var(--skip)}
+.steps2{display:flex;flex-wrap:wrap;gap:6px}
+.step{font-size:11.5px;color:var(--mut);background:#0e1622;border:1px solid var(--line);border-radius:6px;padding:5px 9px}
+.step.gate{border-color:#2c5a70;color:var(--buy)}
+.answer{font-family:Georgia,"Times New Roman",serif;font-size:15px;line-height:1.6}
+.small-receipt{background:var(--paper);color:var(--paper-ink);border-radius:11px;padding:16px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;margin-top:12px}
+.small-receipt .lab{font-size:9px;letter-spacing:.16em;color:var(--paper-mut)}
+.small-receipt .title{font-family:Georgia,"Times New Roman",serif;font-size:14px;font-weight:700;margin:3px 0 10px}
+.small-receipt .kv{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;color:var(--paper-mut)}
+.small-receipt .kv b{color:var(--paper-ink)}
+.meter{height:7px;border-radius:6px;background:#0a0e16;border:1px solid var(--line);overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,#33506b,var(--buy))}
+
+
+
+/* RESTORED LANDING + SEPARATE LIVE DEMO PAGE */
+.landing-proof-preview{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:28px 26px 46px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:28px;
+  align-items:end;
+  border-top:1px solid var(--line-soft);
+  border-bottom:1px solid var(--line-soft);
+}
+.landing-proof-preview h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(30px,4.8vw,54px);
+  line-height:1;
+  letter-spacing:-.055em;
+  margin:0;
+  max-width:780px;
+}
+.landing-proof-preview p{
+  color:var(--mut);
+  font-size:16px;
+  line-height:1.62;
+  max-width:760px;
+  margin:12px 0 0;
+}
+.landing-proof-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.live-demo-wrap{
+  max-width:1400px;
+  margin:0 auto;
+  padding:24px 24px 38px;
+}
+.live-demo-head{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:24px;
+  align-items:end;
+  margin-bottom:18px;
+}
+.live-demo-head h1{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(34px,5.8vw,68px);
+  line-height:.98;
+  letter-spacing:-.06em;
+  margin:0;
+  max-width:920px;
+}
+.live-demo-head p{
+  color:var(--mut);
+  font-size:16px;
+  line-height:1.62;
+  max-width:820px;
+  margin:12px 0 0;
+}
+.demo-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.demo-frame-shell{
+  border:1px solid var(--line);
+  border-radius:20px;
+  overflow:hidden;
+  background:#06080D;
+  box-shadow:0 40px 120px rgba(0,0,0,.42);
+}
+.demo-frame-top{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--line);
+  background:rgba(7,10,16,.94);
+  color:var(--mut);
+  font-size:12px;
+}
+.demo-frame-top .left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.demo-window-dots{display:flex;gap:6px}
+.demo-window-dots i{
+  width:9px;
+  height:9px;
+  border-radius:999px;
+  background:#334155;
+}
+.demo-window-dots i:nth-child(1){background:#E06A5E}
+.demo-window-dots i:nth-child(2){background:#E0A458}
+.demo-window-dots i:nth-child(3){background:#54B488}
+.demo-frame-top strong{
+  color:var(--text);
+  font-weight:750;
+}
+.demo-frame{
+  width:100%;
+  height:calc(100vh - 230px);
+  min-height:720px;
+  border:0;
+  display:block;
+  background:#06080D;
+}
+.demo-hint-row{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  flex-wrap:wrap;
+  padding:14px 16px;
+  border-top:1px solid var(--line);
+  color:var(--faint);
+  font-size:12px;
+  background:rgba(11,15,23,.72);
+}
+.demo-hint-row span{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+.demo-hint-row span:before{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:var(--earned);
+}
+.demo-frame-shell.fullscreen-mode{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  margin:0;
+  border-radius:0;
+  border:0;
+  box-shadow:none;
+}
+.demo-frame-shell.fullscreen-mode .demo-frame{
+  height:calc(100vh - 84px);
+  min-height:0;
+}
+body.demo-fullscreen-active{overflow:hidden}
+.fullscreen-exit{display:none}
+.demo-frame-shell.fullscreen-mode .fullscreen-exit{display:inline-flex}
+
+/* PUBLIC SOLUTION + DEVELOPER PAGES */
+.page-hero{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:70px 26px 34px;
+}
+.page-hero .kicker-text{
+  color:var(--earned2);
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:800;
+  margin-bottom:16px;
+}
+.page-hero h1{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(38px,6.5vw,72px);
+  line-height:1;
+  letter-spacing:-.06em;
+  margin:0;
+  max-width:920px;
+}
+.page-hero p{
+  color:var(--mut);
+  font-size:18px;
+  max-width:720px;
+  margin:20px 0 0;
+}
+.page-section{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:42px 26px;
+  border-top:1px solid var(--line-soft);
+}
+.page-split{
+  display:grid;
+  grid-template-columns:.76fr 1fr;
+  gap:58px;
+  align-items:start;
+}
+.page-split h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(30px,4.5vw,50px);
+  line-height:1.02;
+  letter-spacing:-.052em;
+  margin:0;
+}
+.page-split p.lead{
+  color:var(--mut);
+  font-size:16px;
+  margin:0 0 20px;
+}
+.line-list{
+  border-top:1px solid var(--line-soft);
+}
+.line-item{
+  display:grid;
+  grid-template-columns:170px 1fr;
+  gap:24px;
+  padding:18px 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.line-item strong{
+  color:var(--text);
+  font-weight:760;
+}
+.line-item span{
+  color:var(--mut);
+}
+.solution-flow{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:0;
+  margin-top:22px;
+  padding:24px 0 10px;
+}
+.solution-flow:before{
+  content:"";
+  position:absolute;
+  left:8%;
+  right:8%;
+  top:34px;
+  height:2px;
+  background:linear-gradient(90deg,var(--earned),var(--buy),var(--skip));
+  opacity:.68;
+}
+.solution-node{
+  position:relative;
+  padding-top:34px;
+  text-align:center;
+}
+.solution-node:before{
+  content:"";
+  position:absolute;
+  top:2px;
+  left:50%;
+  transform:translateX(-50%);
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background:var(--ink);
+  border:2px solid var(--earned);
+  box-shadow:0 0 24px rgba(84,180,136,.28);
+}
+.solution-node strong{
+  display:block;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:18px;
+  letter-spacing:-.035em;
+}
+.solution-node span{
+  display:block;
+  color:var(--mut);
+  font-size:12px;
+  max-width:140px;
+  margin:5px auto 0;
+}
+.usecase-strip{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0;
+  border-top:1px solid var(--line-soft);
+  border-bottom:1px solid var(--line-soft);
+}
+.usecase{
+  padding:24px 22px 24px 0;
+}
+.usecase + .usecase{
+  border-left:1px solid var(--line-soft);
+  padding-left:22px;
+}
+.usecase small{
+  color:var(--buy);
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:11px;
+}
+.usecase h3{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:22px;
+  letter-spacing:-.04em;
+  margin:10px 0 8px;
+}
+.usecase p{
+  color:var(--mut);
+  margin:0;
+  font-size:13px;
+}
+.dev-steps{
+  border-top:1px solid var(--line-soft);
+}
+.dev-step{
+  display:grid;
+  grid-template-columns:58px 1fr;
+  gap:22px;
+  padding:20px 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.dev-step .num{
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  color:var(--earned2);
+  border:1px solid rgba(84,180,136,.4);
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:12px;
+}
+.dev-step h3{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:24px;
+  letter-spacing:-.04em;
+  margin:0 0 6px;
+}
+.dev-step p{
+  color:var(--mut);
+  margin:0;
+}
+.code-panel{
+  background:#06080D;
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,.32);
+}
+.code-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--line);
+  color:var(--faint);
+  font-size:12px;
+}
+.code-top strong{
+  color:var(--text);
+  font-weight:700;
+}
+pre{
+  margin:0;
+  padding:18px;
+  overflow:auto;
+  color:#C8D3E6;
+  font-size:12px;
+  line-height:1.7;
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+pre .kw{color:var(--buy)}
+pre .str{color:var(--earned2)}
+pre .cm{color:var(--faint)}
+.endpoint-list{
+  border-top:1px solid var(--line-soft);
+}
+.endpoint{
+  display:grid;
+  grid-template-columns:120px 1fr;
+  gap:20px;
+  padding:14px 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.endpoint code{
+  color:var(--earned2);
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:12px;
+}
+.endpoint span{
+  color:var(--mut);
+}
+.page-cta{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:24px;
+}
+
+@media(max-width:1000px){
+  .landing-proof-preview,.live-demo-head{grid-template-columns:1fr}
+  .landing-proof-actions,.demo-actions{justify-content:flex-start}
+  .demo-frame{height:820px}
+
+  .page-split{grid-template-columns:1fr;gap:26px}
+  .usecase-strip{grid-template-columns:1fr 1fr}
+  .usecase:nth-child(3){border-left:0;padding-left:0;border-top:1px solid var(--line-soft)}
+  .usecase:nth-child(4){border-top:1px solid var(--line-soft)}
+
+  .transaction-theatre{grid-template-columns:1fr;gap:26px}
+  .transaction-theatre:before{display:none}
+  .receipt-wrap{min-height:0}
+  .layout{grid-template-columns:1fr}
+  .doors,.grid4{grid-template-columns:1fr 1fr}
+  .cols{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .landing-proof-preview,.live-demo-wrap{padding-left:18px;padding-right:18px}
+  .demo-frame{height:860px;min-height:700px}
+  .demo-frame-top{align-items:flex-start;flex-direction:column}
+
+  .page-hero,.page-section{padding-left:18px;padding-right:18px}
+  .line-item,.endpoint{grid-template-columns:1fr;gap:6px}
+  .solution-flow{grid-template-columns:1fr;gap:18px}
+  .solution-flow:before{left:9px;right:auto;top:28px;width:2px;height:calc(100% - 50px)}
+  .solution-node{text-align:left;padding:0 0 0 38px}
+  .solution-node:before{left:0;top:3px;transform:none}
+  .solution-node span{margin:5px 0 0;max-width:none}
+  .usecase-strip{grid-template-columns:1fr}
+  .usecase,.usecase + .usecase{padding:22px 0;border-left:0;border-top:1px solid var(--line-soft)}
+  .dev-step{grid-template-columns:42px 1fr;gap:14px}
+
+  .ps-header{top:0;padding:14px 18px}
+  .ps-header .brand span,.ps-nav a:not(.create-link){display:none}
+  .hero{padding:46px 18px 44px}
+  .proof-stage{padding-left:18px;padding-right:18px}
+  .stage-intro{grid-template-columns:1fr}
+  .balance-chip{align-items:flex-start}
+  .rail-line{grid-template-columns:1fr;gap:20px}
+  .rail-line:before,.rail-progress{left:8px;right:auto;top:8px;width:2px !important;height:calc(100% - 16px)}
+  .rail-step{text-align:left;padding:0 0 0 36px}
+  .rail-step:before{left:8px;top:2px;transform:none}
+  .rail-step span{margin:4px 0 0;max-width:none}
+  .doors,.grid4{grid-template-columns:1fr}
+  .live-log li{grid-template-columns:52px 1fr}
+  .ask{align-items:stretch;flex-direction:column}
+}
+</style>
+</head>
+<body>
+<section class="screen on" id="landing">
+  <header class="ps-header">
+    <a class="brand"><b>ProofSource</b></a>
+    <nav class="ps-nav">
+      <a onclick="showById('solutions')">Solutions</a>
+      <a onclick="showById('developers')">Developers</a>
+      <a onclick="location.href='/console.html'">Live demo</a>
+      <a onclick="location.href='/auth.html?mode=signin&role=creator'">Sign in</a>
+      <a class="btn sm primary create-link" style="color:#04222e" onclick="location.href='/auth.html?mode=create&role=creator'">Create account</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="pill"><span class="dot"></span> Nanopayments on Arc · USDC · sub-cent citations</div>
+      <h1>Content that earns <em>every time AI cites it.</em></h1>
+      <p>AI agents read your work to answer questions. ProofSource makes them pay a small amount — settled instantly, with a verifiable receipt — every time they ground an answer in something you wrote.</p>
+      <div class="cta">
+        <a class="btn earn" onclick="location.href='/auth.html?mode=create&role=creator'">Get paid for your work</a>
+        <a class="btn ghost" onclick="location.href='/auth.html?mode=create&role=operator'">I run agents →</a>
+      </div>
+    </section>
+
+    
+<section class="landing-proof-preview" id="proof-moment" aria-label="ProofSource live demo preview">
+  <div>
+    <p class="eyebrow">Live proof</p>
+    <h2>Watch a citation turn into a payment.</h2>
+    <p>Open the full live run to see an AI agent retrieve licensed evidence, clear rights, cite the work, pay the creator, and seal a receipt.</p>
+  </div>
+  <div class="landing-proof-actions">
+    <button class="btn primary" onclick="location.href='/console.html'">Open live demo</button>
+    <button class="btn ghost" onclick="showById('solutions')">See the solution →</button>
+  </div>
+</section>
+
+<section class="doors" aria-label="Audience paths">
+      <div class="door creator">
+        <h3>For writers &amp; publishers</h3>
+        <p>List your articles, set a price per citation, and earn whenever an AI agent uses your work. We can set up a wallet for you — no crypto knowledge needed.</p>
+        <a class="linklike" onclick="location.href='/auth.html?mode=create&role=creator'">Sign in or create account →</a>
+      </div>
+      <div class="door operator">
+        <h3>For research teams &amp; agents</h3>
+        <p>Give your agent a budget and a policy, and let it pay sources per use — transparently, within rules you set, with a receipt for every citation.</p>
+        <a class="linklike blue" onclick="location.href='/auth.html?mode=create&role=operator'">Sign in as operator →</a>
+      </div>
+    </section>
+
+    <section class="page-section" aria-label="How it works">
+      <div style="text-align:center;margin-bottom:26px">
+        <p class="eyebrow">How it works</p>
+        <h2>From a creator's feed to a paid, provable citation.</h2>
+      </div>
+      <div class="dev-steps" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px">
+        <div class="dev-step"><div class="num">01</div><div><h3>Creators list work</h3><p>Connect a feed, set a sub-cent price, add a wallet.</p></div></div>
+        <div class="dev-step"><div class="num">02</div><div><h3>Agents decide</h3><p>A budgeted agent picks which permitted source is worth paying for.</p></div></div>
+        <div class="dev-step"><div class="num">03</div><div><h3>Verified settlement</h3><p>Payment releases on Arc only after delivery is verified.</p></div></div>
+        <div class="dev-step"><div class="num">04</div><div><h3>Proof of earning</h3><p>Every citation leaves a tamper-evident receipt.</p></div></div>
+      </div>
+    </section>
+  </main>
+</section>
+
+
+
+
+<section class="screen" id="live-demo-page">
+  <header class="ps-header">
+    <a class="brand" onclick="showById('landing')"><b>ProofSource</b></a>
+    <nav class="ps-nav">
+      <a onclick="showById('landing')">Home</a>
+      <a onclick="showById('solutions')">Solutions</a>
+      <a onclick="showById('developers')">Developers</a>
+      <a class="active">Live demo</a>
+      <a onclick="location.href='/auth.html?mode=signin&role=creator'">Sign in</a>
+      <a class="btn sm primary create-link" style="color:#04222e" onclick="location.href='/auth.html?mode=create&role=creator'">Create account</a>
+    </nav>
+  </header>
+
+  <main class="live-demo-wrap">
+    <div class="live-demo-head">
+      <div>
+        <p class="eyebrow">Live demo</p>
+        <h1>Watch an AI agent pay the source it cites.</h1>
+        <p>This run starts automatically: source discovery, rights check, authorization, answer generation, citation verification, settlement, creator balance update, and receipt.</p>
+      </div>
+      <div class="demo-actions">
+        <button class="btn primary" onclick="restartLiveDemo()">Restart run</button>
+        <button class="btn ghost" onclick="openDemoFullPage()">Full-page demo ↗</button>
+      </div>
+    </div>
+
+    <div class="demo-frame-shell" id="liveDemoShell">
+      <div class="demo-frame-top">
+        <div class="left">
+          <span class="demo-window-dots"><i></i><i></i><i></i></span>
+          <strong>ProofSource live settlement run</strong>
+        </div>
+        <span>Question → rights → citation → payment → receipt</span>
+        <button class="btn sm ghost fullscreen-exit" onclick="closeDemoFullPage()">Exit full page</button>
+      </div>
+      <iframe
+        id="embeddedProofSourceDemo"
+        class="demo-frame"
+        title="ProofSource live interactive citation settlement demo"
+        srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot; /&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot; /&gt;
+&lt;title&gt;ProofSource — Live Citation Settlement Demo&lt;/title&gt;
+&lt;style&gt;
+:root{
+  --bg:#06080D;
+  --bg2:#0B0F17;
+  --card:#111827;
+  --card2:#151D2B;
+  --card3:#1B2434;
+  --line:#273141;
+  --line2:rgba(231,236,243,.10);
+  --text:#E7ECF3;
+  --mut:#8A97AC;
+  --faint:#5E6B80;
+  --green:#54B488;
+  --green2:#7AE0AD;
+  --blue:#5BC0EB;
+  --amber:#E0A458;
+  --red:#E06A5E;
+  --purple:#B49BEA;
+  --paper:#F2EBDD;
+  --paper2:#FFF8EA;
+  --paperInk:#2A2620;
+  --paperMuted:#7A7160;
+  --shadow:0 30px 90px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif}
+body{
+  background:
+    radial-gradient(760px 460px at 70% 22%,rgba(84,180,136,.11),transparent 64%),
+    radial-gradient(620px 420px at 28% 10%,rgba(91,192,235,.08),transparent 66%),
+    linear-gradient(180deg,#06080D 0%,#0B0F17 48%,#070A10 100%);
+}
+body:before{
+  content:&quot;&quot;;
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.11;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:58px 58px;
+  mask-image:linear-gradient(to bottom,black 0%,transparent 72%);
+}
+button,input{font:inherit}
+button{cursor:pointer}
+a{color:var(--blue);text-decoration:none}
+.serif{font-family:Georgia,&quot;Times New Roman&quot;,serif}
+.mono{font-family:&quot;SFMono-Regular&quot;,Consolas,&quot;Liberation Mono&quot;,Menlo,monospace}
+.app{min-height:100vh;position:relative;z-index:1}
+.start{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:44px;
+}
+.start-card{
+  max-width:760px;
+  text-align:center;
+  padding:20px;
+}
+.brand{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text);
+  margin-bottom:26px;
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,rgba(84,180,136,.28),rgba(91,192,235,.22));
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--green2);
+  font-weight:900;
+}
+.brand b{
+  font-family:Georgia,&quot;Times New Roman&quot;,serif;
+  font-size:22px;
+  letter-spacing:-.05em;
+}
+.start h1{
+  margin:0 auto 18px;
+  font-family:Georgia,&quot;Times New Roman&quot;,serif;
+  font-size:clamp(44px,8vw,86px);
+  line-height:.95;
+  letter-spacing:-.07em;
+  max-width:740px;
+}
+.start h1 span{color:var(--green2)}
+.start p{
+  margin:0 auto 28px;
+  color:var(--mut);
+  font-size:18px;
+  line-height:1.62;
+  max-width:640px;
+}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 18px;
+  color:var(--text);
+  background:var(--card3);
+  font-weight:750;
+  transition:transform .06s ease,filter .15s ease,border-color .15s ease;
+}
+.btn:hover{border-color:var(--mut)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--green);border-color:transparent;color:#04210f}
+.btn.blue{background:var(--blue);border-color:transparent;color:#04222e}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mut)}
+.btn.ghost:hover{color:var(--text)}
+.btn.sm{padding:8px 12px;font-size:12px;border-radius:8px}
+.meta-row{
+  display:flex;
+  gap:18px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:18px;
+  color:var(--faint);
+  font-size:12px;
+}
+.meta-row span{display:inline-flex;align-items:center;gap:7px}
+.meta-dot{width:7px;height:7px;border-radius:999px;background:var(--green);box-shadow:0 0 14px rgba(84,180,136,.6)}
+.demo{display:none;min-height:100vh}
+.demo.on{display:block}
+.topbar{
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:0 24px;
+  border-bottom:1px solid var(--line);
+  background:rgba(7,10,16,.88);
+  backdrop-filter:blur(14px);
+  position:sticky;top:0;z-index:20;
+}
+.top-left,.top-right{display:flex;align-items:center;gap:14px}
+.run-name{
+  color:var(--mut);
+  font-size:13px;
+}
+.live-dot{
+  width:8px;height:8px;border-radius:999px;background:var(--green);
+  animation:pulse 1.4s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(84,180,136,.4)}50%{opacity:.45;box-shadow:0 0 0 6px rgba(84,180,136,0)}}
+.metric{
+  text-align:right;
+  min-width:92px;
+}
+.metric span{
+  display:block;
+  color:var(--faint);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+.metric b{
+  display:block;
+  color:var(--text);
+  font-family:&quot;SFMono-Regular&quot;,Consolas,&quot;Liberation Mono&quot;,Menlo,monospace;
+  font-size:16px;
+  margin-top:2px;
+}
+.metric b.green{color:var(--green2)}
+.pipeline{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  overflow-x:auto;
+  padding:12px 24px;
+  border-bottom:1px solid var(--line);
+  background:rgba(11,15,23,.72);
+}
+.pipe{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  color:var(--faint);
+  font-size:11px;
+}
+.pipe-dot{
+  width:10px;height:10px;border-radius:999px;background:#334155;
+  transition:background .2s ease,box-shadow .2s ease;
+}
+.pipe.active{color:var(--text)}
+.pipe.active .pipe-dot{
+  background:var(--blue);
+  box-shadow:0 0 18px rgba(91,192,235,.46);
+}
+.pipe.passed{color:var(--mut)}
+.pipe.passed .pipe-dot{
+  background:var(--green);
+  box-shadow:0 0 16px rgba(84,180,136,.28);
+}
+.main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;
+  height:calc(100vh - 105px);
+  min-height:620px;
+}
+.feed{
+  overflow:auto;
+  padding:28px 34px 120px;
+}
+.side{
+  border-left:1px solid var(--line);
+  padding:20px 16px 110px;
+  overflow:auto;
+  background:rgba(11,15,23,.52);
+}
+.block{
+  margin-bottom:24px;
+  animation:fadeIn .28s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.label{
+  font-size:11px;
+  color:var(--faint);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:800;
+  margin-bottom:7px;
+}
+.label.blue{color:var(--blue)}
+.label.green{color:var(--green2)}
+.label.amber{color:var(--amber)}
+.label.purple{color:var(--purple)}
+.message{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--card2),var(--card));
+  border-radius:12px;
+  padding:16px 18px;
+  color:#C8D3E6;
+  line-height:1.7;
+  font-size:14px;
+}
+.message.user{
+  background:var(--card3);
+  color:var(--text);
+}
+pre.message{
+  white-space:pre-wrap;
+  font-family:&quot;SFMono-Regular&quot;,Consolas,&quot;Liberation Mono&quot;,Menlo,monospace;
+  font-size:12px;
+  color:#BFD1E7;
+  margin:0;
+}
+.cursor{
+  display:inline-block;width:2px;height:14px;background:var(--blue);margin-left:2px;vertical-align:-2px;animation:blink 1s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.source-table{
+  width:100%;
+  border-collapse:collapse;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:linear-gradient(180deg,var(--card2),var(--card));
+}
+.source-table th{
+  color:var(--faint);
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  text-align:left;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+}
+.source-table td{
+  padding:12px;
+  border-bottom:1px solid var(--line);
+  color:var(--mut);
+  font-size:12px;
+}
+.source-table tr:last-child td{border-bottom:0}
+.source-table strong{color:var(--text);font-weight:750}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.badge.buy{background:#13384A;color:var(--blue)}
+.badge.ok{background:#10231B;color:var(--green2)}
+.badge.skip{background:#2A2115;color:var(--amber)}
+.answer-card{
+  border:1px solid rgba(84,180,136,.32);
+  background:linear-gradient(180deg,rgba(84,180,136,.08),rgba(21,29,43,.9));
+  border-radius:14px;
+  padding:18px;
+}
+.answer-card h3{
+  margin:0 0 10px;
+  font-family:Georgia,&quot;Times New Roman&quot;,serif;
+  letter-spacing:-.04em;
+  font-size:24px;
+}
+.answer-card p{
+  margin:0;color:#C9D5E8;line-height:1.72;
+}
+.answer-card mark{
+  background:rgba(84,180,136,.14);
+  color:#DDFBE9;
+  border-bottom:1px solid rgba(84,180,136,.42);
+  padding:2px 4px;
+  border-radius:4px;
+}
+.panel-title{
+  font-size:11px;
+  font-weight:850;
+  color:var(--faint);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin:4px 0 12px;
+}
+.agent{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 0;
+  border-bottom:1px solid var(--line2);
+}
+.agent:last-child{border-bottom:0}
+.agent-dot{
+  width:8px;height:8px;border-radius:999px;background:#334155;
+}
+.agent.running .agent-dot{background:var(--blue);animation:pulse 1.4s infinite}
+.agent.done .agent-dot{background:var(--green)}
+.agent strong{font-size:13px;font-weight:700;color:var(--text)}
+.agent span{margin-left:auto;color:var(--faint);font-size:11px}
+.side-card{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  background:linear-gradient(180deg,var(--card2),var(--card));
+  margin-bottom:16px;
+}
+.row{
+  display:flex;justify-content:space-between;gap:12px;
+  padding:8px 0;
+  border-top:1px solid var(--line2);
+  font-size:12px;
+}
+.row:first-of-type{border-top:0}
+.row span{color:var(--mut)}
+.row b{font-family:&quot;SFMono-Regular&quot;,Consolas,&quot;Liberation Mono&quot;,Menlo,monospace;color:var(--text)}
+.row b.green{color:var(--green2)}
+.row b.blue{color:var(--blue)}
+.progress{
+  height:7px;border:1px solid var(--line);border-radius:999px;background:#0A0E16;overflow:hidden;margin-top:8px;
+}
+.progress i{
+  display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--blue),var(--amber));transition:width .45s ease;
+}
+.receipt{
+  background:linear-gradient(180deg,var(--paper2),var(--paper));
+  color:var(--paperInk);
+  border-radius:13px;
+  padding:16px;
+  margin-top:12px;
+  box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,.18);
+}
+.receipt .receipt-top{
+  display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px;
+}
+.receipt .title{
+  font-family:Georgia,&quot;Times New Roman&quot;,serif;
+  font-weight:800;
+  letter-spacing:-.045em;
+  font-size:17px;
+}
+.stamp{
+  border:2px solid #1A7B5A;
+  color:#10664A;
+  font-size:8px;
+  font-weight:950;
+  padding:4px 6px;
+  letter-spacing:.12em;
+  transform:rotate(5deg);
+}
+.receipt .kv{
+  display:flex;justify-content:space-between;gap:12px;
+  padding:6px 0;
+  border-bottom:1px dashed rgba(42,38,32,.22);
+  font-family:&quot;SFMono-Regular&quot;,Consolas,&quot;Liberation Mono&quot;,Menlo,monospace;
+  font-size:10.5px;
+}
+.receipt .kv span{color:var(--paperMuted)}
+.receipt .kv b{text-align:right;color:var(--paperInk)}
+.receipt .amount{
+  display:flex;justify-content:space-between;align-items:end;gap:12px;margin-top:14px;
+}
+.receipt .amount span{
+  color:var(--paperMuted);
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  font-family:&quot;SFMono-Regular&quot;,Consolas,&quot;Liberation Mono&quot;,Menlo,monospace;
+}
+.receipt .amount b{
+  font-family:Georgia,&quot;Times New Roman&quot;,serif;
+  font-size:35px;
+  letter-spacing:-.08em;
+  color:#0C2D22;
+}
+.receipt.pulse{animation:receiptPulse .8s ease}
+@keyframes receiptPulse{0%{transform:scale(1);filter:brightness(1)}40%{transform:scale(1.02);filter:brightness(1.08)}100%{transform:scale(1);filter:brightness(1)}}
+.audit{
+  display:grid;gap:8px;margin-top:10px;
+}
+.audit-item{
+  padding:9px 10px;border-radius:8px;background:rgba(255,255,255,.035);border:1px solid var(--line2);
+}
+.audit-item strong{display:block;color:var(--text);font-size:12px;margin-bottom:2px}
+.audit-item span{color:var(--mut);font-size:11px}
+.overlay{
+  display:none;
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.84);
+  backdrop-filter:blur(8px);
+  padding:24px;
+}
+.overlay.on{display:grid;place-items:center}
+.overlay-card{
+  width:min(940px,100%);
+  max-height:88vh;
+  overflow:auto;
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:0;
+  background:#0D1117;
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:0 50px 130px rgba(0,0,0,.55);
+}
+.overlay-left{
+  padding:24px;background:linear-gradient(180deg,rgba(84,180,136,.08),rgba(21,29,43,.78));border-right:1px solid var(--line);
+}
+.overlay-right{padding:24px}
+.overlay h2{
+  font-family:Georgia,&quot;Times New Roman&quot;,serif;
+  font-size:34px;
+  line-height:1;
+  letter-spacing:-.055em;
+  margin:0 0 12px;
+}
+.overlay p{color:var(--mut);line-height:1.6;margin:0 0 18px}
+.close{
+  position:absolute;top:18px;right:20px;
+  width:34px;height:34px;border-radius:999px;
+  background:var(--card2);border:1px solid var(--line);color:var(--mut);
+}
+.controls{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  z-index:50;
+  display:flex;
+  gap:8px;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:rgba(17,24,39,.92);
+  backdrop-filter:blur(14px);
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+}
+.controls button{
+  background:transparent;border:0;color:var(--mut);font-size:12px;padding:6px 12px;border-radius:999px;
+}
+.controls button.active{background:var(--blue);color:#04222e;font-weight:800}
+.controls button:hover{color:var(--text)}
+.toast{
+  position:fixed;
+  top:76px;
+  right:22px;
+  z-index:60;
+  background:#0D2818;
+  border:1px solid #166534;
+  color:var(--green2);
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:13px;
+  display:none;
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+}
+.toast.on{display:block;animation:fadeIn .25s ease}
+@media(max-width:980px){
+  .main{grid-template-columns:1fr;height:auto;min-height:0}
+  .side{border-left:0;border-top:1px solid var(--line)}
+  .overlay-card{grid-template-columns:1fr}
+  .overlay-left{border-right:0;border-bottom:1px solid var(--line)}
+  .topbar{height:auto;align-items:flex-start;padding:14px 18px;flex-direction:column}
+  .top-right{width:100%;justify-content:space-between}
+}
+@media(max-width:640px){
+  .start{padding:22px}
+  .feed{padding:22px 18px 120px}
+  .pipeline{padding-left:18px;padding-right:18px}
+  .metric{min-width:auto}
+  .metric span{font-size:9px}
+  .metric b{font-size:13px}
+  .controls{max-width:calc(100% - 24px);overflow-x:auto}
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;app&quot;&gt;
+  &lt;section class=&quot;start&quot; id=&quot;start&quot; style=&quot;display:none&quot;&gt;
+    &lt;div class=&quot;start-card&quot;&gt;
+      &lt;div class=&quot;brand&quot;&gt;&lt;div class=&quot;brand-mark&quot;&gt;PS&lt;/div&gt;&lt;b&gt;ProofSource&lt;/b&gt;&lt;/div&gt;
+      &lt;h1&gt;Watch an AI agent &lt;span&gt;pay the source&lt;/span&gt; it cites.&lt;/h1&gt;
+      &lt;p&gt;A cinematic walkthrough of the full ProofSource transaction: licensed evidence discovery, policy authorization, citation verification, USDC settlement, creator earnings update, and audit receipt.&lt;/p&gt;
+      &lt;button class=&quot;btn primary&quot; id=&quot;startBtn&quot;&gt;Start live demo&lt;/button&gt;
+      &lt;div class=&quot;meta-row&quot;&gt;
+        &lt;span&gt;&lt;i class=&quot;meta-dot&quot;&gt;&lt;/i&gt; 75 seconds&lt;/span&gt;
+        &lt;span&gt;no signup required&lt;/span&gt;
+        &lt;span&gt;mock Arc settlement&lt;/span&gt;
+        &lt;span&gt;auditable receipt&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;demo on&quot; id=&quot;demo&quot;&gt;
+    &lt;div class=&quot;topbar&quot;&gt;
+      &lt;div class=&quot;top-left&quot;&gt;
+        &lt;div class=&quot;brand&quot;&gt;&lt;div class=&quot;brand-mark&quot;&gt;PS&lt;/div&gt;&lt;b&gt;ProofSource&lt;/b&gt;&lt;/div&gt;
+        &lt;span class=&quot;run-name mono&quot;&gt;/ live-citation-run&lt;/span&gt;
+        &lt;span class=&quot;live-dot&quot;&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;top-right&quot;&gt;
+        &lt;div class=&quot;metric&quot;&gt;&lt;span&gt;Creator balance&lt;/span&gt;&lt;b class=&quot;green&quot; id=&quot;balance&quot;&gt;$0.0240&lt;/b&gt;&lt;/div&gt;
+        &lt;div class=&quot;metric&quot;&gt;&lt;span&gt;Budget left&lt;/span&gt;&lt;b id=&quot;budget&quot;&gt;$1.000&lt;/b&gt;&lt;/div&gt;
+        &lt;div class=&quot;metric&quot;&gt;&lt;span&gt;Settled&lt;/span&gt;&lt;b class=&quot;green&quot; id=&quot;settled&quot;&gt;$0.000&lt;/b&gt;&lt;/div&gt;
+        &lt;div class=&quot;metric&quot;&gt;&lt;span&gt;Receipt&lt;/span&gt;&lt;b id=&quot;receiptMetric&quot;&gt;pending&lt;/b&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;pipeline&quot; id=&quot;pipeline&quot;&gt;&lt;/div&gt;
+
+    &lt;div class=&quot;main&quot;&gt;
+      &lt;div class=&quot;feed&quot; id=&quot;feed&quot;&gt;&lt;/div&gt;
+
+      &lt;aside class=&quot;side&quot;&gt;
+        &lt;div class=&quot;panel-title&quot;&gt;Live workers&lt;/div&gt;
+        &lt;div class=&quot;side-card&quot; id=&quot;agents&quot;&gt;&lt;/div&gt;
+
+        &lt;div class=&quot;panel-title&quot;&gt;Policy and budget&lt;/div&gt;
+        &lt;div class=&quot;side-card&quot;&gt;
+          &lt;div class=&quot;row&quot;&gt;&lt;span&gt;Workspace&lt;/span&gt;&lt;b&gt;Acme Research&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;row&quot;&gt;&lt;span&gt;Use case&lt;/span&gt;&lt;b&gt;commercial&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;row&quot;&gt;&lt;span&gt;Max / citation&lt;/span&gt;&lt;b&gt;$0.010&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;row&quot;&gt;&lt;span&gt;Require licence&lt;/span&gt;&lt;b class=&quot;green&quot;&gt;yes&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;row&quot;&gt;&lt;span&gt;Require receipt&lt;/span&gt;&lt;b class=&quot;green&quot;&gt;yes&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;progress&quot;&gt;&lt;i id=&quot;policyProgress&quot;&gt;&lt;/i&gt;&lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;div class=&quot;panel-title&quot;&gt;Current receipt&lt;/div&gt;
+        &lt;div class=&quot;receipt&quot; id=&quot;miniReceipt&quot;&gt;
+          &lt;div class=&quot;receipt-top&quot;&gt;&lt;div class=&quot;title&quot;&gt;Citation receipt&lt;/div&gt;&lt;div class=&quot;stamp&quot;&gt;PENDING&lt;/div&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;source&lt;/span&gt;&lt;b id=&quot;rSource&quot;&gt;—&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;agent&lt;/span&gt;&lt;b id=&quot;rAgent&quot;&gt;—&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;policy&lt;/span&gt;&lt;b id=&quot;rPolicy&quot;&gt;—&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;network&lt;/span&gt;&lt;b&gt;Arc testnet&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;amount&quot;&gt;&lt;span&gt;released&lt;/span&gt;&lt;b id=&quot;rAmount&quot;&gt;$0.000&lt;/b&gt;&lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;button class=&quot;btn blue&quot; style=&quot;width:100%;margin-top:14px&quot; id=&quot;openReceipt&quot; disabled&gt;Open receipt and audit&lt;/button&gt;
+
+        &lt;div class=&quot;panel-title&quot; style=&quot;margin-top:18px&quot;&gt;Audit trail&lt;/div&gt;
+        &lt;div class=&quot;audit&quot; id=&quot;auditTrail&quot;&gt;&lt;/div&gt;
+      &lt;/aside&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;controls&quot;&gt;
+      &lt;button id=&quot;backBtn&quot;&gt;← Back&lt;/button&gt;
+      &lt;button id=&quot;autoBtn&quot; class=&quot;active&quot;&gt;Auto ●&lt;/button&gt;
+      &lt;button id=&quot;nextBtn&quot;&gt;Next →&lt;/button&gt;
+      &lt;button id=&quot;replayBtn&quot;&gt;Restart run&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;div class=&quot;overlay&quot; id=&quot;overlay&quot;&gt;
+    &lt;button class=&quot;close&quot; id=&quot;closeOverlay&quot;&gt;×&lt;/button&gt;
+    &lt;div class=&quot;overlay-card&quot;&gt;
+      &lt;div class=&quot;overlay-left&quot;&gt;
+        &lt;h2&gt;Receipt sealed.&lt;/h2&gt;
+        &lt;p&gt;The same proof is visible to the publisher, the AI team, and an auditor. It shows the source used, the agent that used it, the licence policy, settlement amount, and receipt hash.&lt;/p&gt;
+        &lt;div class=&quot;receipt pulse&quot;&gt;
+          &lt;div class=&quot;receipt-top&quot;&gt;&lt;div class=&quot;title&quot;&gt;Citation receipt&lt;/div&gt;&lt;div class=&quot;stamp&quot;&gt;VERIFIED&lt;/div&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;source&lt;/span&gt;&lt;b&gt;AI Content Licensing Brief&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;agent&lt;/span&gt;&lt;b&gt;ResearchAgent‑42&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;policy&lt;/span&gt;&lt;b&gt;Commercial cite OK&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;source hash&lt;/span&gt;&lt;b&gt;0x7b2…ea1&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;answer ref&lt;/span&gt;&lt;b&gt;ans_4f81c&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;kv&quot;&gt;&lt;span&gt;network&lt;/span&gt;&lt;b&gt;Arc testnet&lt;/b&gt;&lt;/div&gt;
+          &lt;div class=&quot;amount&quot;&gt;&lt;span&gt;released&lt;/span&gt;&lt;b&gt;$0.006&lt;/b&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;overlay-right&quot;&gt;
+        &lt;div class=&quot;panel-title&quot;&gt;Auditable proof trail&lt;/div&gt;
+        &lt;div class=&quot;audit&quot;&gt;
+          &lt;div class=&quot;audit-item&quot;&gt;&lt;strong&gt;01 · Source discovered&lt;/strong&gt;&lt;span&gt;AI Content Licensing Brief matched the user query with 86% relevance.&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;audit-item&quot;&gt;&lt;strong&gt;02 · Rights cleared&lt;/strong&gt;&lt;span&gt;Commercial citation allowed. Price below workspace ceiling.&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;audit-item&quot;&gt;&lt;strong&gt;03 · Evidence delivered&lt;/strong&gt;&lt;span&gt;Licensed evidence exposed to ResearchAgent‑42 under authorization auth_91f.&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;audit-item&quot;&gt;&lt;strong&gt;04 · Citation verified&lt;/strong&gt;&lt;span&gt;Answer contains verified citation span and source hash.&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;audit-item&quot;&gt;&lt;strong&gt;05 · Settlement released&lt;/strong&gt;&lt;span&gt;$0.006 credited to creator payout wallet. Receipt 0x91f…7ac sealed.&lt;/span&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;btn primary&quot; style=&quot;margin-top:18px&quot; id=&quot;overlayReplay&quot;&gt;Replay settlement&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;toast&quot; id=&quot;toast&quot;&gt;Creator earned +$0.006 from verified AI citation.&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+const STEPS = [
+  {id:&quot;question&quot;,label:&quot;Question&quot;,duration:3000},
+  {id:&quot;discover&quot;,label:&quot;Discover&quot;,duration:4300},
+  {id:&quot;license&quot;,label:&quot;License&quot;,duration:3600},
+  {id:&quot;authorize&quot;,label:&quot;Authorize&quot;,duration:3400},
+  {id:&quot;answer&quot;,label:&quot;Answer&quot;,duration:4800},
+  {id:&quot;verify&quot;,label:&quot;Verify&quot;,duration:3600},
+  {id:&quot;settle&quot;,label:&quot;Settle&quot;,duration:3600},
+  {id:&quot;receipt&quot;,label:&quot;Receipt&quot;,duration:3200},
+  {id:&quot;result&quot;,label:&quot;Result&quot;,duration:0}
+];
+
+const COPY = {
+  question: {
+    label:&quot;USER&quot;,
+    type:&quot;user&quot;,
+    text:&quot;What are the key arguments around AI content licensing and creator compensation?&quot;
+  },
+  discover: {
+    label:&quot;SOURCE DISCOVERY&quot;,
+    type:&quot;pre&quot;,
+    text:&quot;Searching the ProofSource registry...\n\n→ 24 licensed works matched\n→ 3 meet policy and budget\n→ ranked by relevance, licence confidence, and value-per-cent\n\nBest candidate: AI Content Licensing Brief\nCreator: Prof. Helen Astor\nPrice: $0.006 per verified citation&quot;
+  },
+  license: {
+    label:&quot;RIGHTS AND POLICY CHECK&quot;,
+    type:&quot;pre&quot;,
+    text:&quot;Checking commercial use rights...\n\n✓ Licence allows citation inside commercial AI answer\n✓ Price $0.006 is below workspace ceiling $0.010\n✓ Source reputation 91/100\n✓ Payout wallet verified\n\nPolicy decision: AUTHORIZE SOURCE USE&quot;
+  },
+  authorize: {
+    label:&quot;AUTHORIZATION&quot;,
+    type:&quot;pre&quot;,
+    text:&quot;Creating citation authorization...\n\nauthorization_id: auth_91f7ac\nagent: ResearchAgent-42\nsource: src_ai_licensing_brief\nmax_settlement: $0.006\nexpires_in: 90 seconds\n\nLicensed evidence delivered to agent context.&quot;
+  },
+  answer: {
+    label:&quot;AI ANSWER&quot;,
+    type:&quot;answer&quot;,
+    text:&quot;The debate turns on three questions: whether model training and retrieval count as fair use, how creators are compensated when AI products ground answers in their work, and whether per-use settlement can replace blanket licensing. [verified paid citation: AI Content Licensing Brief]&quot;
+  },
+  verify: {
+    label:&quot;CITATION VERIFICATION&quot;,
+    type:&quot;pre&quot;,
+    text:&quot;Verifying generated answer...\n\n✓ Citation span found in final answer\n✓ Source hash matches authorized evidence\n✓ Answer reference created: ans_4f81c\n✓ No duplicate billing detected\n\nVerification status: PASSED&quot;
+  },
+  settle: {
+    label:&quot;SETTLEMENT&quot;,
+    type:&quot;pre&quot;,
+    text:&quot;Preparing settlement on Arc testnet...\n\npayer: Acme Research\npayee: Prof. Helen Astor\namount: $0.006 USDC\nreason: verified AI citation\n\nSettlement status: RELEASED&quot;
+  },
+  receipt: {
+    label:&quot;RECEIPT&quot;,
+    type:&quot;pre&quot;,
+    text:&quot;Receipt sealed.\n\nreceipt_hash: 0x91f...7ac\nsource_hash: 0x7b2...ea1\nanswer_ref: ans_4f81c\nsettlement: $0.006\nstatus: verified + settled\n\nPublisher, AI team, and auditor now share the same proof trail.&quot;
+  },
+  result: {
+    label:&quot;RESULT&quot;,
+    type:&quot;result&quot;,
+    text:&quot;The AI answered with licensed evidence. The source was verified. The creator was paid. The receipt proves it.&quot;
+  }
+};
+
+const AGENTS = [
+  {name:&quot;Retrieval agent&quot;, when:&quot;discover&quot;},
+  {name:&quot;Rights engine&quot;, when:&quot;license&quot;},
+  {name:&quot;Citation verifier&quot;, when:&quot;verify&quot;},
+  {name:&quot;Settlement worker&quot;, when:&quot;settle&quot;}
+];
+
+let step = 0;
+let started = true;
+let auto = true;
+let timer = null;
+let streamTimer = null;
+
+const start = document.getElementById(&quot;start&quot;);
+const demo = document.getElementById(&quot;demo&quot;);
+const startBtn = document.getElementById(&quot;startBtn&quot;);
+const pipeline = document.getElementById(&quot;pipeline&quot;);
+const feed = document.getElementById(&quot;feed&quot;);
+const agents = document.getElementById(&quot;agents&quot;);
+const balance = document.getElementById(&quot;balance&quot;);
+const budget = document.getElementById(&quot;budget&quot;);
+const settled = document.getElementById(&quot;settled&quot;);
+const receiptMetric = document.getElementById(&quot;receiptMetric&quot;);
+const policyProgress = document.getElementById(&quot;policyProgress&quot;);
+const auditTrail = document.getElementById(&quot;auditTrail&quot;);
+const miniReceipt = document.getElementById(&quot;miniReceipt&quot;);
+const rSource = document.getElementById(&quot;rSource&quot;);
+const rAgent = document.getElementById(&quot;rAgent&quot;);
+const rPolicy = document.getElementById(&quot;rPolicy&quot;);
+const rAmount = document.getElementById(&quot;rAmount&quot;);
+const openReceipt = document.getElementById(&quot;openReceipt&quot;);
+const overlay = document.getElementById(&quot;overlay&quot;);
+const closeOverlay = document.getElementById(&quot;closeOverlay&quot;);
+const overlayReplay = document.getElementById(&quot;overlayReplay&quot;);
+const toast = document.getElementById(&quot;toast&quot;);
+const backBtn = document.getElementById(&quot;backBtn&quot;);
+const autoBtn = document.getElementById(&quot;autoBtn&quot;);
+const nextBtn = document.getElementById(&quot;nextBtn&quot;);
+const replayBtn = document.getElementById(&quot;replayBtn&quot;);
+
+function initPipeline(){
+  pipeline.innerHTML = STEPS.slice(0,-1).map((s,i)=&gt;`
+    &lt;div class=&quot;pipe&quot; data-i=&quot;${i}&quot;&gt;
+      &lt;i class=&quot;pipe-dot&quot;&gt;&lt;/i&gt;&lt;span&gt;${s.label}&lt;/span&gt;
+    &lt;/div&gt;
+  `).join(&quot;&quot;);
+}
+
+function setPipeline(){
+  [...pipeline.querySelectorAll(&quot;.pipe&quot;)].forEach((el,i)=&gt;{
+    el.classList.toggle(&quot;active&quot;, i === step);
+    el.classList.toggle(&quot;passed&quot;, i &lt; step);
+  });
+}
+
+function streamInto(el, text, speed=13, done){
+  clearInterval(streamTimer);
+  let i = 0;
+  el.innerHTML = &quot;&quot;;
+  streamTimer = setInterval(()=&gt;{
+    i++;
+    el.textContent = text.slice(0,i);
+    const cursor = document.createElement(&quot;span&quot;);
+    cursor.className = &quot;cursor&quot;;
+    if(i &lt; text.length) el.appendChild(cursor);
+    if(i &gt;= text.length){
+      clearInterval(streamTimer);
+      if(done) done();
+    }
+  }, speed);
+}
+
+function fullTextFor(id){
+  return COPY[id].text;
+}
+
+function renderFeed(){
+  feed.innerHTML = &quot;&quot;;
+  for(let i=0;i&lt;=step;i++){
+    const s = STEPS[i];
+    const c = COPY[s.id];
+    if(!c) continue;
+    const block = document.createElement(&quot;div&quot;);
+    block.className = &quot;block&quot;;
+    const label = document.createElement(&quot;div&quot;);
+    label.className = &quot;label &quot; + (i===step ? &quot;blue&quot; : &quot;&quot;);
+    label.textContent = c.label;
+    block.appendChild(label);
+
+    if(c.type === &quot;pre&quot;){
+      const pre = document.createElement(&quot;pre&quot;);
+      pre.className = &quot;message&quot;;
+      block.appendChild(pre);
+      feed.appendChild(block);
+      if(i === step) streamInto(pre, c.text, 9);
+      else pre.textContent = c.text;
+    } else if(c.type === &quot;user&quot;){
+      const msg = document.createElement(&quot;div&quot;);
+      msg.className = &quot;message user&quot;;
+      block.appendChild(msg);
+      feed.appendChild(block);
+      if(i === step) streamInto(msg, c.text, 16);
+      else msg.textContent = c.text;
+    } else if(c.type === &quot;answer&quot;){
+      const card = document.createElement(&quot;div&quot;);
+      card.className = &quot;answer-card&quot;;
+      card.innerHTML = `&lt;h3&gt;Generated answer&lt;/h3&gt;&lt;p&gt;${c.text.replace(&quot;[verified paid citation: AI Content Licensing Brief]&quot;,&quot;&lt;mark&gt;[verified paid citation: AI Content Licensing Brief]&lt;/mark&gt;&quot;)}&lt;/p&gt;`;
+      block.appendChild(card);
+      feed.appendChild(block);
+    } else if(c.type === &quot;result&quot;){
+      const card = document.createElement(&quot;div&quot;);
+      card.className = &quot;answer-card&quot;;
+      card.innerHTML = `&lt;h3&gt;AI paid the source it cited.&lt;/h3&gt;&lt;p&gt;${c.text}&lt;/p&gt;&lt;div style=&quot;display:flex;gap:22px;flex-wrap:wrap;margin-top:18px&quot;&gt;
+        &lt;div&gt;&lt;div class=&quot;label green&quot;&gt;Creator earned&lt;/div&gt;&lt;div class=&quot;mono&quot; style=&quot;font-size:28px;color:var(--green2);font-weight:900&quot;&gt;$0.006&lt;/div&gt;&lt;/div&gt;
+        &lt;div&gt;&lt;div class=&quot;label blue&quot;&gt;Receipt&lt;/div&gt;&lt;div class=&quot;mono&quot; style=&quot;font-size:28px;color:var(--blue);font-weight:900&quot;&gt;0x91f…7ac&lt;/div&gt;&lt;/div&gt;
+        &lt;div&gt;&lt;div class=&quot;label amber&quot;&gt;Status&lt;/div&gt;&lt;div class=&quot;mono&quot; style=&quot;font-size:28px;color:var(--amber);font-weight:900&quot;&gt;settled&lt;/div&gt;&lt;/div&gt;
+      &lt;/div&gt;`;
+      block.appendChild(card);
+      feed.appendChild(block);
+    }
+  }
+
+  if(step &gt;= 1){
+    const tableBlock = document.createElement(&quot;div&quot;);
+    tableBlock.className = &quot;block&quot;;
+    tableBlock.innerHTML = `&lt;div class=&quot;label green&quot;&gt;Source decision&lt;/div&gt;
+      &lt;table class=&quot;source-table&quot;&gt;
+        &lt;tr&gt;&lt;th&gt;Licensed work&lt;/th&gt;&lt;th&gt;Relevance&lt;/th&gt;&lt;th&gt;Price&lt;/th&gt;&lt;th&gt;Decision&lt;/th&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;&lt;strong&gt;AI Content Licensing Brief&lt;/strong&gt;&lt;br&gt;&lt;span class=&quot;mono&quot;&gt;src_ai_licensing_brief&lt;/span&gt;&lt;/td&gt;&lt;td&gt;86%&lt;/td&gt;&lt;td&gt;$0.006&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;badge buy&quot;&gt;buy&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;&lt;strong&gt;Search royalties explainer&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;62%&lt;/td&gt;&lt;td&gt;$0.004&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;badge skip&quot;&gt;skip&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;&lt;strong&gt;Open web summary note&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;44%&lt;/td&gt;&lt;td&gt;$0.001&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;badge skip&quot;&gt;weak&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;`;
+    feed.appendChild(tableBlock);
+  }
+
+  feed.scrollTo({top:feed.scrollHeight,behavior:&quot;smooth&quot;});
+}
+
+function renderAgents(){
+  const currentId = STEPS[step].id;
+  const order = STEPS.map(s=&gt;s.id);
+  agents.innerHTML = AGENTS.map(a=&gt;{
+    const aIndex = order.indexOf(a.when);
+    const status = step === aIndex ? &quot;running&quot; : step &gt; aIndex ? &quot;done&quot; : &quot;&quot;;
+    const tokens = step &gt; aIndex ? (a.when===&quot;discover&quot;?&quot;1.4K&quot;:a.when===&quot;license&quot;?&quot;0.8K&quot;:a.when===&quot;verify&quot;?&quot;0.9K&quot;:&quot;0.6K&quot;) : step===aIndex ? &quot;...&quot; : &quot;&quot;;
+    return `&lt;div class=&quot;agent ${status}&quot;&gt;&lt;i class=&quot;agent-dot&quot;&gt;&lt;/i&gt;&lt;strong&gt;${a.name}&lt;/strong&gt;&lt;span&gt;${tokens}&lt;/span&gt;&lt;/div&gt;`;
+  }).join(&quot;&quot;);
+}
+
+function addAudit(title, detail){
+  const exists = [...auditTrail.querySelectorAll(&quot;strong&quot;)].some(x=&gt;x.textContent === title);
+  if(exists) return;
+  const div = document.createElement(&quot;div&quot;);
+  div.className = &quot;audit-item&quot;;
+  div.innerHTML = `&lt;strong&gt;${title}&lt;/strong&gt;&lt;span&gt;${detail}&lt;/span&gt;`;
+  auditTrail.appendChild(div);
+}
+
+function animateNumber(el, from, to, prefix=&quot;$&quot;, decimals=3, duration=700){
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min((now-start)/duration,1);
+    const val = from + (to-from) * (1 - Math.pow(1-p,3));
+    el.textContent = prefix + val.toFixed(decimals);
+    if(p &lt; 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function updateState(){
+  setPipeline();
+  renderAgents();
+
+  const progress = Math.min(100, Math.max(0, step * 12.5));
+  policyProgress.style.width = progress + &quot;%&quot;;
+
+  if(step &gt;= 1){
+    addAudit(&quot;Source discovery started&quot;,&quot;Registry returned 24 matching licensed works.&quot;);
+    rSource.textContent = &quot;AI Content Licensing Brief&quot;;
+  }
+  if(step &gt;= 2){
+    addAudit(&quot;Rights cleared&quot;,&quot;Commercial citation allowed; price below workspace ceiling.&quot;);
+    rPolicy.textContent = &quot;Commercial cite OK&quot;;
+  }
+  if(step &gt;= 3){
+    addAudit(&quot;Use authorized&quot;,&quot;Authorization auth_91f7ac created for ResearchAgent‑42.&quot;);
+    rAgent.textContent = &quot;ResearchAgent‑42&quot;;
+  }
+  if(step &gt;= 5){
+    addAudit(&quot;Citation verified&quot;,&quot;Final answer contains the authorized evidence span.&quot;);
+    miniReceipt.querySelector(&quot;.stamp&quot;).textContent = &quot;VERIFIED&quot;;
+    miniReceipt.classList.add(&quot;pulse&quot;);
+  }
+  if(step &gt;= 6){
+    addAudit(&quot;Settlement released&quot;,&quot;$0.006 credited to the creator payout wallet.&quot;);
+    if(settled.textContent !== &quot;$0.006&quot;){
+      animateNumber(settled,0,0.006,&quot;$&quot;,3);
+      animateNumber(budget,1.000,0.994,&quot;$&quot;,3);
+      animateNumber(balance,0.0240,0.0300,&quot;$&quot;,4);
+      showToast();
+    }
+    rAmount.textContent = &quot;$0.006&quot;;
+  }
+  if(step &gt;= 7){
+    addAudit(&quot;Receipt sealed&quot;,&quot;Receipt 0x91f…7ac is available to all parties.&quot;);
+    receiptMetric.textContent = &quot;0x91f…7ac&quot;;
+    openReceipt.disabled = false;
+  }
+}
+
+function showToast(){
+  toast.classList.add(&quot;on&quot;);
+  setTimeout(()=&gt;toast.classList.remove(&quot;on&quot;),2600);
+}
+
+function render(){
+  setPipeline();
+  renderFeed();
+  updateState();
+  scheduleNext();
+}
+
+function scheduleNext(){
+  clearTimeout(timer);
+  if(!auto || step &gt;= STEPS.length-1) return;
+  timer = setTimeout(()=&gt;{ step++; render(); }, STEPS[step].duration);
+}
+
+function startDemo(){
+  started = true;
+  start.style.display = &quot;none&quot;;
+  demo.classList.add(&quot;on&quot;);
+  step = 0;
+  resetRuntime();
+  render();
+}
+
+function resetRuntime(){
+  clearTimeout(timer);
+  clearInterval(streamTimer);
+  feed.innerHTML = &quot;&quot;;
+  auditTrail.innerHTML = &quot;&quot;;
+  balance.textContent = &quot;$0.0240&quot;;
+  budget.textContent = &quot;$1.000&quot;;
+  settled.textContent = &quot;$0.000&quot;;
+  receiptMetric.textContent = &quot;pending&quot;;
+  policyProgress.style.width = &quot;0%&quot;;
+  rSource.textContent = &quot;—&quot;;
+  rAgent.textContent = &quot;—&quot;;
+  rPolicy.textContent = &quot;—&quot;;
+  rAmount.textContent = &quot;$0.000&quot;;
+  miniReceipt.querySelector(&quot;.stamp&quot;).textContent = &quot;PENDING&quot;;
+  miniReceipt.classList.remove(&quot;pulse&quot;);
+  openReceipt.disabled = true;
+}
+
+function next(){
+  if(step &lt; STEPS.length-1){ step++; render(); }
+}
+function back(){
+  if(step &gt; 0){ step--; resetRuntime(); for(let i=0;i&lt;step;i++){ step=i; updateState(); } step = Math.max(0, step); render(); }
+}
+function replay(){
+  step = 0;
+  resetRuntime();
+  render();
+}
+function toggleAuto(){
+  auto = !auto;
+  autoBtn.classList.toggle(&quot;active&quot;,auto);
+  autoBtn.textContent = auto ? &quot;Auto ●&quot; : &quot;Auto ○&quot;;
+  scheduleNext();
+}
+
+startBtn.addEventListener(&quot;click&quot;,startDemo);
+nextBtn.addEventListener(&quot;click&quot;,()=&gt;{auto=false;autoBtn.classList.remove(&quot;active&quot;);autoBtn.textContent=&quot;Auto ○&quot;;next();});
+backBtn.addEventListener(&quot;click&quot;,()=&gt;{auto=false;autoBtn.classList.remove(&quot;active&quot;);autoBtn.textContent=&quot;Auto ○&quot;;back();});
+autoBtn.addEventListener(&quot;click&quot;,toggleAuto);
+replayBtn.addEventListener(&quot;click&quot;,()=&gt;{auto=true;autoBtn.classList.add(&quot;active&quot;);autoBtn.textContent=&quot;Auto ●&quot;;replay();});
+openReceipt.addEventListener(&quot;click&quot;,()=&gt;overlay.classList.add(&quot;on&quot;));
+closeOverlay.addEventListener(&quot;click&quot;,()=&gt;overlay.classList.remove(&quot;on&quot;));
+overlayReplay.addEventListener(&quot;click&quot;,()=&gt;{overlay.classList.remove(&quot;on&quot;);replay();});
+overlay.addEventListener(&quot;click&quot;,(e)=&gt;{if(e.target === overlay) overlay.classList.remove(&quot;on&quot;);});
+
+initPipeline();
+resetRuntime();
+render();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+">
+      </iframe>
+      <div class="demo-hint-row">
+        <span>Auto-starts without signup</span>
+        <span>Mock Arc settlement</span>
+        <span>Creator balance updates live</span>
+        <span>Receipt and audit trail included</span>
+      </div>
+    </div>
+  </main>
+</section>
+
+
+<section class="screen" id="solutions">
+  <header class="ps-header">
+    <a class="brand" onclick="showById('landing')"><b>ProofSource</b></a>
+    <nav class="ps-nav">
+      <a class="active">Solutions</a>
+      <a onclick="showById('developers')">Developers</a>
+      <a onclick="location.href='/console.html'">Live demo</a>
+      <a onclick="location.href='/auth.html?mode=signin&role=creator'">Sign in</a>
+      <a class="btn sm primary create-link" style="color:#04222e" onclick="location.href='/auth.html?mode=create&role=creator'">Create account</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="kicker-text">Solution</div>
+      <h1>The settlement layer for AI-cited knowledge.</h1>
+      <p>ProofSource sits between content owners and AI applications so knowledge can be licensed, cited, verified, paid for, and audited without one-off negotiations.</p>
+      <div class="page-cta">
+        <button class="btn primary" onclick="location.href='/console.html'">Watch the live proof</button>
+        <button class="btn ghost" onclick="showById('developers')">See developer flow →</button>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-split">
+        <div>
+          <p class="eyebrow">What breaks today</p>
+          <h2>AI uses knowledge, but the commercial path is missing.</h2>
+        </div>
+        <div class="line-list">
+          <div class="line-item"><strong>Creators and publishers</strong><span>Lose traffic, attribution, and monetisation when AI systems use their work as answer fuel.</span></div>
+          <div class="line-item"><strong>AI product teams</strong><span>Need trusted, licensed, citable sources without manually negotiating with every content owner.</span></div>
+          <div class="line-item"><strong>Enterprises</strong><span>Need evidence trails: what source was used, whether rights cleared, what was paid, and who approved it.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-split">
+        <div>
+          <p class="eyebrow">What ProofSource provides</p>
+          <h2>One rail for rights, proof, payment, and receipts.</h2>
+        </div>
+        <div class="line-list">
+          <div class="line-item"><strong>Source registry</strong><span>Creators list articles, reports, datasets, feeds, or archives with usage rules and citation prices.</span></div>
+          <div class="line-item"><strong>Policy check</strong><span>AI apps check licence, price ceiling, reputation, and budget before using a paid source.</span></div>
+          <div class="line-item"><strong>Citation verification</strong><span>ProofSource confirms the source was actually used in the answer before settlement releases.</span></div>
+          <div class="line-item"><strong>Settlement receipt</strong><span>Both sides get the same proof: source hash, answer reference, amount, payer, payee, and status.</span></div>
+        </div>
+      </div>
+
+      <div class="solution-flow" aria-label="ProofSource solution flow">
+        <div class="solution-node"><strong>Publish</strong><span>Content owner lists work and usage terms.</span></div>
+        <div class="solution-node"><strong>Request</strong><span>AI app asks for licensed evidence.</span></div>
+        <div class="solution-node"><strong>Authorize</strong><span>Budget and rights are checked.</span></div>
+        <div class="solution-node"><strong>Settle</strong><span>Payment releases after verified use.</span></div>
+        <div class="solution-node"><strong>Audit</strong><span>Receipts prove who used what.</span></div>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <p class="eyebrow">Where it fits</p>
+      <div class="usecase-strip">
+        <article class="usecase"><small>01</small><h3>AI search</h3><p>Answer engines pay licensed sources when they ground responses in publisher work.</p></article>
+        <article class="usecase"><small>02</small><h3>Enterprise research</h3><p>Analyst copilots cite premium evidence with budgets, approvals, and receipts.</p></article>
+        <article class="usecase"><small>03</small><h3>Market intelligence</h3><p>Specialist reports and data sources earn per verified use inside agent workflows.</p></article>
+        <article class="usecase"><small>04</small><h3>Knowledge marketplaces</h3><p>Content networks become AI-readable, priced, and settlement-ready.</p></article>
+      </div>
+    </section>
+  </main>
+</section>
+
+<section class="screen" id="developers">
+  <header class="ps-header">
+    <a class="brand" onclick="showById('landing')"><b>ProofSource</b></a>
+    <nav class="ps-nav">
+      <a onclick="showById('solutions')">Solutions</a>
+      <a class="active">Developers</a>
+      <a onclick="location.href='/console.html'">Live demo</a>
+      <a onclick="location.href='/auth.html?mode=signin&role=operator'">Sign in</a>
+      <a class="btn sm primary create-link" style="color:#04222e" onclick="location.href='/auth.html?mode=create&role=operator'">Create account</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="kicker-text">Developers</div>
+      <h1>Add paid, verified sources to an AI workflow.</h1>
+      <p>Developers use ProofSource through an SDK or REST API inside a RAG pipeline, agent workflow, AI search product, or enterprise research assistant.</p>
+      <div class="page-cta">
+        <button class="btn primary" onclick="location.href='/auth.html?mode=create&role=operator'">Create developer account</button>
+        <button class="btn ghost" onclick="location.href='/console.html'">Watch settlement demo →</button>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-split">
+        <div>
+          <p class="eyebrow">How developers use it</p>
+          <h2>The app asks, ProofSource clears, the model cites, settlement follows.</h2>
+        </div>
+        <div class="dev-steps">
+          <div class="dev-step"><div class="num">01</div><div><h3>Create a project</h3><p>Register the AI app, set team budgets, approved source categories, maximum price per citation, and webhook endpoints.</p></div></div>
+          <div class="dev-step"><div class="num">02</div><div><h3>Search licensed sources</h3><p>At retrieval time, ask ProofSource for relevant sources with price, licence, reputation, and policy metadata.</p></div></div>
+          <div class="dev-step"><div class="num">03</div><div><h3>Authorize source use</h3><p>Before the model sees premium content, request authorization. ProofSource checks budget, licence terms, and usage policy.</p></div></div>
+          <div class="dev-step"><div class="num">04</div><div><h3>Verify and settle</h3><p>After generation, submit the answer and citation spans. ProofSource verifies real use, settles the payment, and returns a receipt.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-split">
+        <div>
+          <p class="eyebrow">SDK example</p>
+          <h2>Designed to fit where RAG already happens.</h2>
+          <p class="lead">A developer should not rebuild licensing, wallet routing, citation verification, and receipts. ProofSource becomes the payment-aware source layer around retrieval and generation.</p>
+        </div>
+        <div class="code-panel">
+          <div class="code-top"><strong>TypeScript SDK</strong><span>agent / RAG workflow</span></div>
+<pre><span class="kw">const</span> proof = <span class="kw">new</span> ProofSource({
+  apiKey: process.env.PROOFSOURCE_API_KEY,
+  project: <span class="str">"acme-research-agent"</span>
+});
+
+<span class="cm">// 1. Find licensed sources within policy and budget</span>
+<span class="kw">const</span> sources = <span class="kw">await</span> proof.sources.search({
+  query: userQuestion,
+  maxPricePerCitation: <span class="str">"0.010"</span>,
+  purpose: <span class="str">"commercial_research_answer"</span>
+});
+
+<span class="cm">// 2. Authorize the chosen source before model use</span>
+<span class="kw">const</span> auth = <span class="kw">await</span> proof.citations.authorize({
+  sourceId: sources[0].id,
+  agentId: <span class="str">"ResearchAgent-42"</span>
+});
+
+<span class="cm">// 3. Generate answer with licensed evidence</span>
+<span class="kw">const</span> answer = <span class="kw">await</span> llm.generate({
+  question: userQuestion,
+  context: auth.evidence
+});
+
+<span class="cm">// 4. Verify citation and settle payment</span>
+<span class="kw">const</span> receipt = <span class="kw">await</span> proof.citations.verifyAndSettle({
+  authorizationId: auth.id,
+  answer,
+  citationSpans: extractCitations(answer)
+});
+
+console.log(receipt.amount, receipt.status, receipt.hash);</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-split">
+        <div>
+          <p class="eyebrow">Core API surface</p>
+          <h2>Small set of endpoints, clear responsibility.</h2>
+        </div>
+        <div class="endpoint-list">
+          <div class="endpoint"><code>POST /sources</code><span>Publish a source with licence terms, price, owner wallet, and verification metadata.</span></div>
+          <div class="endpoint"><code>GET /sources/search</code><span>Find licensed sources matching a user query, budget, use case, and policy.</span></div>
+          <div class="endpoint"><code>POST /citations/authorize</code><span>Reserve permission to use a source before exposing it to the model.</span></div>
+          <div class="endpoint"><code>POST /citations/verify</code><span>Confirm the source appears in the final answer and create proof of use.</span></div>
+          <div class="endpoint"><code>POST /settlements</code><span>Release USDC settlement after verified citation use.</span></div>
+          <div class="endpoint"><code>GET /receipts/{id}</code><span>Retrieve tamper-evident proof for publisher, buyer, or auditor.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section">
+      <div class="page-split">
+        <div>
+          <p class="eyebrow">Integrations</p>
+          <h2>One core, several doors. Use it where your agents already live.</h2>
+          <p class="lead">The same payment-aware engine, reachable four ways. Your assistant can answer with cited sources and pay those creators per citation — in one line.</p>
+        </div>
+        <div class="endpoint-list">
+          <div class="endpoint"><code>claude mcp add proofsource -- npx -y @proofsource/mcp</code><span>MCP server — drop ProofSource into Claude Code/Desktop, Cursor, or Windsurf.</span></div>
+          <div class="endpoint"><code>openclaw plugins install proofsource</code><span>OpenClaw plugin — any self-hosted assistant pays the creators it cites, from ClawHub.</span></div>
+          <div class="endpoint"><code>npm i @proofsource/sdk</code><span>TypeScript SDK — the typed client every surface sits on; wire it into any RAG or agent workflow.</span></div>
+          <div class="endpoint"><code>x402 · Gateway-batched on Arc</code><span>Pay-per-call endpoints other agents settle against in USDC, interoperable with the Arc x402 ecosystem.</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</section>
+
+
+<section class="screen" id="auth">
+  <header class="ps-header">
+    <a class="brand"><b>ProofSource</b></a>
+    <nav class="ps-nav">
+      <a onclick="showById('landing')">Home</a>
+      <a onclick="showById('solutions')">Solutions</a>
+      <a onclick="showById('developers')">Developers</a>
+      <a id="authNavAction" onclick="toggleAuthMode()">Create account</a>
+    </nav>
+  </header>
+  <div class="auth">
+    <h1 id="authTitle">Sign in</h1>
+    <p class="sub" id="authSub">Access your private ProofSource workspace.</p>
+
+    <div class="auth-note" id="authNote">
+      Public visitors see the proof demo. Private earnings and operator consoles open only after authentication.
+    </div>
+
+    <div class="card">
+      <label id="roleLabel">Workspace</label>
+      <div class="roles">
+        <div class="role creator on" data-role="creator" onclick="setAuthRole('creator')">
+          <div class="t">Publish &amp; earn</div>
+          <div class="d">get paid when AI cites your licensed work</div>
+        </div>
+        <div class="role operator" data-role="operator" onclick="setAuthRole('operator')">
+          <div class="t">Cite &amp; settle</div>
+          <div class="d">run AI agents with source budgets and receipts</div>
+        </div>
+      </div>
+
+      <div id="nameField" style="display:none">
+        <label>Name or publication</label>
+        <input id="authName" value="Prof. Helen Astor" />
+      </div>
+
+      <label>Email</label>
+      <input id="authEmail" value="helen@uni.edu" />
+
+      <label>Password</label>
+      <input id="authPassword" type="password" value="••••••" />
+
+      <button class="btn primary" id="authSubmit" style="width:100%;margin-top:20px" onclick="completeAuth()">Sign in</button>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;color:var(--mut);font-size:13px">
+      <span id="authSwitchText">Not registered yet?</span>
+      <a id="authSwitchLink" onclick="toggleAuthMode()">Create account</a>
+    </div>
+  </div>
+</section>
+
+
+<section class="screen" id="creator">
+  <header class="ps-header">
+    <a class="brand"><b>ProofSource</b></a>
+    <nav class="ps-nav"><span class="private-badge">Private workspace</span><a class="active">Earnings</a><span class="who">Prof. Helen Astor · 0xb6f4…a91c</span><a onclick="logout()">Sign out</a></nav>
+  </header>
+  <div class="wrap">
+    <div class="wallet">
+      <div class="ic">◈</div>
+      <div class="grow"><div class="muted" style="font-size:12px">Payout wallet</div><div class="addr">0xb6f4e9810735…a91c  (managed for you)</div></div>
+      <button class="btn ghost sm">Change</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
+      <input style="flex:1;min-width:200px" placeholder="Connect a feed to list more work — https://yourblog.com/rss" />
+      <input style="max-width:110px" value="0.002" />
+      <button class="btn primary sm">List feed</button>
+      <button class="btn ghost sm">Try sample</button>
+    </div>
+    <div class="eh">
+      <div><div class="l">Total earned</div><div class="big">$0.0300</div><div class="sub">from verified AI citations of your work</div></div>
+      <button class="btn earn">Withdraw</button>
+    </div>
+    <div class="grid4">
+      <div class="card kpi"><div class="l">Citations paid</div><div class="v">13</div></div>
+      <div class="card kpi"><div class="l">Avg per citation</div><div class="v">$0.0023</div></div>
+      <div class="card kpi"><div class="l">Pieces listed</div><div class="v">9</div></div>
+      <div class="card kpi"><div class="l">Settlement</div><div class="v" style="font-size:18px">Arc · live</div></div>
+    </div>
+    <div class="cols">
+      <div>
+        <h3 class="sec">Your pieces</h3>
+        <table>
+          <thead><tr><th>Piece</th><th>Citations</th><th style="text-align:right">Earned</th></tr></thead>
+          <tbody>
+            <tr><td>AI content licensing and creator compensation</td><td class="mono muted">7×</td><td class="n">0.018000</td></tr>
+            <tr><td>Attribution metadata as the payout rule</td><td class="mono muted">4×</td><td class="n">0.008000</td></tr>
+            <tr><td>Music royalties split by what listeners played</td><td class="mono muted">2×</td><td class="n">0.004000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 class="sec">Recent citations — your proof of earning</h3>
+        <div class="cite"><div class="t">AI content licensing and creator compensation</div><div class="m"><span>ResearchAgent‑42 cited this · just now</span><span class="amt">+0.006000</span></div><div class="proof">receipt 0x91f…7ac · tx 0x9c4f7a21… · <a>explorer ↗</a></div></div>
+        <div class="cite"><div class="t">Attribution metadata as the payout rule</div><div class="m"><span>An AI agent cited this · 2 min ago</span><span class="amt">+0.002000</span></div><div class="proof">receipt 8f3ac1d90b22… · tx 0x771a0e44…</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="console">
+  <header class="ps-header">
+    <a class="brand"><b>ProofSource</b></a>
+    <nav class="ps-nav"><span class="private-badge">Private workspace</span><a class="active">Console</a><span class="who">Acme Research</span><a onclick="logout()">Sign out</a></nav>
+  </header>
+  <div class="wrap">
+    <div class="layout">
+      <div>
+        <div class="card">
+          <p class="eyebrow">Your mandate</p>
+          <div class="muted" style="font-size:12px">Budget remaining</div>
+          <div class="meter"><i style="width:66%"></i></div>
+          <div class="row"><span>Budget</span><b>$1.00</b></div>
+          <div class="row"><span>Per-task ceiling</span><b>$0.05</b></div>
+          <div class="row"><span>Max / source</span><b>$0.05</b></div>
+          <div class="row"><span>Require citation</span><b>yes</b></div>
+          <p class="hint" style="margin-top:12px">The rules your agent obeys. Creators price their work; you set the budget and policy; the agent only chooses permitted sources worth paying for.</p>
+        </div>
+      </div>
+      <div>
+        <div class="ask">
+          <div class="q">What are the key arguments around AI content licensing and creator compensation?</div>
+          <button class="btn primary sm">Run</button>
+        </div>
+        <div class="card">
+          <span class="badge b-buy">BUY</span>
+          <p class="muted" style="font-size:13px;margin:8px 0 0">Chose the best permitted source of 3 on value-per-cent — within the per-task ceiling and budget.</p>
+          <table style="margin-top:8px">
+            <tr><th>source</th><th>relevance</th><th>price</th><th>verdict</th></tr>
+            <tr><td>AI content licensing and creator…</td><td><div style="display:flex;gap:8px;align-items:center"><div class="relbar"><i style="width:86%"></i></div><span class="mono muted" style="font-size:12px">86%</span></div></td><td class="mono" style="font-size:12px">$0.006</td><td><span class="chip2 c-buy">bought</span></td></tr>
+            <tr><td>Why subscriptions priced out the…</td><td><div style="display:flex;gap:8px;align-items:center"><div class="relbar"><i style="width:20%"></i></div><span class="mono muted" style="font-size:12px">20%</span></div></td><td class="mono" style="font-size:12px">$0.002</td><td><span class="chip2 c-skip">below floor</span></td></tr>
+          </table>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <p class="eyebrow">Lifecycle</p>
+          <div class="steps2"><span class="step">discover</span><span class="step">decide</span><span class="step">authorize</span><span class="step">deliver</span><span class="step gate">verify ✓</span><span class="step">release</span><span class="step">receipt</span><span class="step">answer</span></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <p class="eyebrow">Answer</p>
+          <div class="answer">The debate turns on fair use of training data, how creators are compensated when models ground answers in their work, and whether per-use settlement can replace blanket licensing.</div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <p class="eyebrow">This run</p>
+          <div class="row"><span>Decision</span><b style="color:var(--buy)">BUY</b></div>
+          <div class="row"><span>Settled</span><b>$0.006000</b></div>
+          <div class="row"><span>Verification</span><b style="color:var(--earned)">passed</b></div>
+        </div>
+        <div class="small-receipt">
+          <div class="lab">PROOF OF CITATION</div>
+          <div class="title">AI content licensing and creator compensation</div>
+          <div class="kv"><span>agent</span><b>ResearchAgent‑42</b></div>
+          <div class="kv"><span>creator</span><b>Prof. Helen Astor</b></div>
+          <div class="kv"><span>amount</span><b>$0.006000</b></div>
+          <div class="kv"><span>receipt</span><b>0x91f…7ac</b></div>
+          <div class="kv"><span>status</span><b>verified + settled</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const screens = [...document.querySelectorAll('.screen')];
+const switchButtons = [];
+let isAuthenticated = false;
+let authRole = 'creator';
+let authMode = 'signin';
+
+function setActivePublicTab(id){
+  return;
+}
+
+function show(id, btn){
+  if((id === 'creator' || id === 'console') && !isAuthenticated){
+    showAuth('signin', id === 'console' ? 'operator' : 'creator', btn);
+    return;
+  }
+  screens.forEach(s => s.classList.toggle('on', s.id === id));
+  if(btn){
+    switchButtons.forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+  } else {
+    setActivePublicTab(id);
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showById(id){
+  show(id);
+}
+
+function showAuth(mode='signin', role='creator', btn){
+  authMode = mode;
+  authRole = role;
+  screens.forEach(s => s.classList.toggle('on', s.id === 'auth'));
+  if(btn){
+    switchButtons.forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+  } else {
+    setActivePublicTab('auth');
+  }
+  renderAuth();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function toggleAuthMode(){
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  renderAuth();
+}
+
+function setAuthRole(role){
+  authRole = role;
+  document.querySelectorAll('.role[data-role]').forEach(el => {
+    el.classList.toggle('on', el.dataset.role === role);
+  });
+  const name = document.getElementById('authName');
+  const email = document.getElementById('authEmail');
+  if(name){ name.value = role === 'creator' ? 'Prof. Helen Astor' : 'Acme Research'; }
+  if(email){ email.value = role === 'creator' ? 'helen@uni.edu' : 'ops@acmeresearch.ai'; }
+  updateAuthNote();
+}
+
+function updateAuthNote(){
+  const note = document.getElementById('authNote');
+  if(!note) return;
+  if(authMode === 'signin'){
+    note.textContent = authRole === 'creator'
+      ? 'Creator workspace: list your work, connect payouts, and see verified citation earnings.'
+      : 'Agent workspace: set budgets, approve source rules, verify citations, and settle usage.';
+  } else {
+    note.textContent = authRole === 'creator'
+      ? 'Create a creator account to publish licensed work and earn from verified AI citations.'
+      : 'Create an agent/operator account to cite trusted sources with budgets, policy checks, and receipts.';
+  }
+}
+
+function renderAuth(){
+  const isSignup = authMode === 'signup';
+  document.getElementById('authTitle').textContent = isSignup ? 'Create your account' : 'Sign in';
+  document.getElementById('authSub').textContent = isSignup
+    ? 'Create one account, then enter the right private workspace.'
+    : 'Access your private ProofSource workspace.';
+  document.getElementById('authSubmit').textContent = isSignup ? 'Create account' : 'Sign in';
+  document.getElementById('authSwitchText').textContent = isSignup ? 'Already registered?' : 'Not registered yet?';
+  document.getElementById('authSwitchLink').textContent = isSignup ? 'Sign in' : 'Create account';
+  document.getElementById('authNavAction').textContent = isSignup ? 'Sign in' : 'Create account';
+  document.getElementById('roleLabel').textContent = isSignup ? 'What are you here to do?' : 'Choose your workspace';
+  document.getElementById('nameField').style.display = isSignup ? 'block' : 'none';
+  setAuthRole(authRole);
+}
+
+function completeAuth(){
+  isAuthenticated = true;
+  show(authRole === 'creator' ? 'creator' : 'console');
+}
+
+function logout(){
+  isAuthenticated = false;
+  show('landing');
+}
+
+function location.href='/console.html'{
+  show('live-demo-page');
+  setTimeout(restartLiveDemo, 120);
+}
+
+
+let embeddedProofSourceDemoSrcDoc = null;
+
+function restartLiveDemo(){
+  const frame = document.getElementById('embeddedProofSourceDemo');
+  if(!frame) return;
+  if(!embeddedProofSourceDemoSrcDoc){
+    embeddedProofSourceDemoSrcDoc = frame.getAttribute('srcdoc');
+  }
+  frame.setAttribute('srcdoc', '');
+  setTimeout(() => frame.setAttribute('srcdoc', embeddedProofSourceDemoSrcDoc), 80);
+}
+
+function openDemoFullPage(){
+  const shell = document.getElementById('liveDemoShell');
+  if(!shell) return;
+  shell.classList.add('fullscreen-mode');
+  document.body.classList.add('demo-fullscreen-active');
+  restartLiveDemo();
+}
+
+function closeDemoFullPage(){
+  const shell = document.getElementById('liveDemoShell');
+  if(!shell) return;
+  shell.classList.remove('fullscreen-mode');
+  document.body.classList.remove('demo-fullscreen-active');
+}
+</script>
+</body>
+</html>

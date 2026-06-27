@@ -1,0 +1,13 @@
+{
+  "name": "proofsource",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Content that earns every time an agent cites it — verified-delivery nanopayments on Arc.",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "smoke": "npm run smoke -w @proofsource/api",
+    "dev": "npm run dev -w @proofsource/api",
+    "start": "npm run start -w @proofsource/api",
+    "typecheck": "npm run typecheck -w @proofsource/api"
+  }
+}

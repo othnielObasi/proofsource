@@ -1,0 +1,78 @@
+/* ProofSource — shared design system. One visual language across every surface. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --ink:#0B0F17; --ink2:#0E1420; --panel:#151D2B; --panel2:#1B2434; --line:#273141;
+  --line-soft:rgba(231,236,243,.10);
+  --mut:#8A97AC; --faint:#5E6B80; --text:#E7ECF3;
+  --buy:#5BC0EB; --reuse:#B49BEA; --skip:#E0A458; --block:#E06A5E; --earned:#54B488; --earned2:#7AE0AD;
+  --paper:#F2EBDD; --paper-line:#D8CDB8; --paper-ink:#2A2620; --paper-mut:#7A7160;
+  --shadow:0 32px 90px rgba(0,0,0,.38);
+  --r:13px; --max:1120px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5;letter-spacing:-0.005em;
+  background:
+    radial-gradient(760px 460px at 68% 30%, rgba(84,180,136,.10), transparent 65%),
+    radial-gradient(620px 420px at 36% 22%, rgba(91,192,235,.07), transparent 68%),
+    linear-gradient(180deg,#06080D 0%,#0B0F17 46%,#070A10 100%);
+  background-attachment:fixed}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.12;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:58px 58px;mask-image:linear-gradient(to bottom,black 0%,transparent 68%)}
+body>*{position:relative;z-index:1}
+a{color:var(--buy);text-decoration:none}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.serif{font-family:Fraunces,Georgia,serif}
+
+/* header / nav */
+.ps-header{display:flex;align-items:center;gap:18px;padding:15px 26px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:rgba(11,15,23,.82);backdrop-filter:blur(10px);z-index:20}
+.ps-header .brand{display:flex;align-items:baseline;gap:9px;text-decoration:none;color:var(--text)}
+.ps-header .brand b{font-family:Fraunces,serif;font-weight:600;font-size:18px;letter-spacing:-.02em}
+.ps-header .brand span{color:var(--mut);font-size:12px}
+.ps-nav{display:flex;align-items:center;gap:18px;margin-left:auto}
+.ps-nav a{color:var(--mut);font-size:13px;position:relative}
+.ps-nav a.active,.ps-nav a:hover{color:var(--text)}
+.ps-nav a.active:after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;border-radius:999px;background:var(--earned);box-shadow:0 0 16px rgba(84,180,136,.42)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--earned);box-shadow:0 0 18px rgba(84,180,136,.6)}
+.ps-nav .who{color:var(--faint);font-size:12px;font-family:"JetBrains Mono",monospace}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:14px;
+  border-radius:9px;padding:11px 18px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;
+  transition:border-color .15s,background .15s,color .15s,filter .15s,transform .04s}
+.btn:hover{border-color:var(--mut)}
+.btn:active{transform:translateY(1px)}
+.btn.sm{padding:8px 13px;font-size:13px}
+.btn.primary{background:var(--buy);color:#04222e;border-color:transparent}
+.btn.earn{background:var(--earned);color:#04210f;border-color:transparent}
+.btn.primary:hover,.btn.earn:hover{filter:brightness(1.07);border-color:transparent}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mut);padding-left:8px;padding-right:8px}
+.btn.ghost:hover{color:var(--text)}
+.btn:disabled{opacity:.5;cursor:default}
+.linklike{color:var(--earned);font-weight:600;font-size:13px}
+.linklike.blue{color:var(--buy)}
+
+/* layout primitives */
+.wrap{max-width:1100px;margin:0 auto;padding:26px}
+.narrow{max-width:760px}
+.card{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:800;margin:0 0 11px}
+.muted{color:var(--mut)} .faint{color:var(--faint)}
+
+/* forms */
+label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:16px 0 7px}
+input[type=text],input[type=email],input[type=password],input[type=url]{width:100%;background:var(--panel2);
+  border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--text);font:inherit;font-size:14px}
+input::placeholder{color:var(--faint)}
+.hint{font-size:12px;color:var(--faint);margin-top:6px}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:11px;font:inherit;cursor:pointer}
+.seg button.on{border-color:#2c5a70;color:var(--buy);background:#0f1a22}
+.err{background:#2a1c1b;border:1px solid #4a2b27;border-radius:11px;padding:12px 14px;color:#f0a59c;font-size:13px}
+.ok{background:#10231b;border:1px solid #1f4636;border-radius:11px;padding:12px 14px;color:var(--earned);font-size:13px}
+
+/* badges */
+.badge{font-weight:600;font-size:12px;letter-spacing:.04em;padding:4px 11px;border-radius:7px}
+.b-buy{background:#13384a;color:var(--buy)} .b-reuse{background:#2c2547;color:var(--reuse)}
+.b-skip{background:#3a2e1a;color:var(--skip)} .b-block{background:#3a211f;color:var(--block)}

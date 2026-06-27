@@ -1,0 +1,116 @@
+/* ProofSource Design System — shared tokens consumed by redesign/ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Canvas & structure ─────────────────────────────── */
+  --canvas:       #080C12;
+  --panel:        #0B0F17;
+  --panel2:       #0E1420;
+  --card-fill:    rgba(255,255,255,.025);
+  --ink:          #0B0F17;
+
+  /* ── Text ───────────────────────────────────────────── */
+  --text:         #E7ECF3;
+  --mut:          #8A97AC;
+  --faint:        #5E6B80;
+
+  /* ── Lines ──────────────────────────────────────────── */
+  --line:         rgba(255,255,255,.08);
+  --line-soft:    rgba(255,255,255,.05);
+
+  /* ── Semantic decision colors ───────────────────────── */
+
+  /* earned / creator payout — green */
+  --earned:       #54B488;
+  --earned2:      #7ED4AD;
+  --earned-fill:  rgba(84,180,136,.12);
+  --earned-line:  rgba(84,180,136,.3);
+  --glow-earned:  0 0 10px rgba(84,180,136,.55), 0 0 24px rgba(84,180,136,.22);
+
+  /* buy / operator payment — blue */
+  --buy:          #5BC0EB;
+  --buy-fill:     rgba(91,192,235,.1);
+  --buy-line:     rgba(91,192,235,.28);
+  --glow-buy:     0 0 10px rgba(91,192,235,.5), 0 0 22px rgba(91,192,235,.2);
+
+  /* skip — amber */
+  --skip:         #E0A458;
+  --skip-fill:    rgba(224,164,88,.1);
+  --glow-skip:    0 0 8px rgba(224,164,88,.4);
+
+  /* block — red */
+  --block:        #E06A5E;
+  --block-fill:   rgba(224,106,94,.1);
+  --glow-block:   0 0 8px rgba(224,106,94,.4);
+
+  /* reuse — teal */
+  --reuse:        #3DBFB0;
+  --reuse-fill:   rgba(61,191,176,.1);
+  --glow-reuse:   0 0 8px rgba(61,191,176,.4);
+
+  /* ── Receipt (paper) ────────────────────────────────── */
+  --paper:        #F2EBDD;
+  --paper-ink:    #2A2620;
+  --paper-mut:    #7A7160;
+
+  /* ── Typography ─────────────────────────────────────── */
+  --font-serif:   'Fraunces', Georgia, serif;
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Blueprint grid (sacred motif) ──────────────────── */
+  --grid-image:   linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px);
+  --grid-size:    48px 48px;
+  --grid-mask:    radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 100%);
+
+  /* ── Animation ──────────────────────────────────────── */
+  --ease:         cubic-bezier(.25,.46,.45,.94);
+
+  /* ── Elevation ──────────────────────────────────────── */
+  --shadow:       0 24px 64px rgba(0,0,0,.6), 0 4px 16px rgba(0,0,0,.4);
+}
+
+/* ── Keyframes ────────────────────────────────────────── */
+
+@keyframes tickerflow {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes tagdot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}
+
+@keyframes receiptPrint {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes flashEarn {
+  0%   { transform: scale(1); filter: brightness(1); }
+  40%  { transform: scale(1.04); filter: brightness(1.3); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-6px) rotate(.6deg); }
+}
+
+@keyframes sweep {
+  from { background-position: 200% center; }
+  to   { background-position: -200% center; }
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes bp {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .3; }
+}

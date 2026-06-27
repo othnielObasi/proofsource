@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofSource — content that earns every time AI cites it</title>
+<link rel="stylesheet" href="/app.css" />
+<style>
+  .hero{max-width:920px;margin:0 auto;padding:64px 24px 30px;text-align:center}
+  .hero h1{font-family:Fraunces,serif;font-weight:600;font-size:clamp(34px,6vw,58px);line-height:1.08;letter-spacing:-0.02em;margin:0 0 18px}
+  .hero h1 em{font-style:normal;color:var(--earned2)}
+  .hero p{font-size:17px;color:var(--mut);max-width:600px;margin:0 auto 28px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:6px 13px;margin-bottom:26px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--earned);box-shadow:0 0 18px rgba(84,180,136,.6)}
+  .doors{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:880px;margin:46px auto 0;padding:0 24px}
+  .door{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:16px;padding:24px;text-align:left;transition:border-color .15s}
+  .door:hover{border-color:#33425a}
+  .door h3{font-family:Fraunces,serif;font-size:21px;margin:0 0 8px}
+  .door p{color:var(--mut);font-size:14px;margin:0 0 16px}
+  .door.creator h3{color:var(--earned)} .door.operator h3{color:var(--buy)}
+  .how{max-width:880px;margin:56px auto 0;padding:0 24px}
+  .how h2{font-family:Fraunces,serif;font-size:15px;letter-spacing:.04em;color:var(--faint);text-transform:uppercase;text-align:center;margin:0 0 22px}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .step{background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:13px;padding:16px}
+  .step .n{font-family:"JetBrains Mono",monospace;color:var(--buy);font-size:13px}
+  .step .t{font-family:Fraunces,serif;font-size:15px;margin:6px 0 4px}
+  .step .d{font-size:12.5px;color:var(--mut)}
+  footer{max-width:880px;margin:60px auto 40px;padding:0 24px;color:var(--faint);font-size:12.5px;text-align:center}
+  @media(max-width:760px){.doors,.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header id="ps-header" class="ps-header"></header>
+
+<section class="hero">
+  <div class="pill"><span class="dot"></span> Nanopayments on Arc · USDC · sub-cent</div>
+  <h1>Content that earns <em>every time AI cites it.</em></h1>
+  <p>AI agents read your work to answer questions. ProofSource makes them pay a small amount — settled instantly, with a verifiable receipt — every time they ground an answer in something you wrote.</p>
+  <div class="cta">
+    <a href="/auth.html?mode=create&role=creator" class="btn earn">Get paid for your work</a>
+    <a href="/auth.html?mode=create&role=operator" class="btn ghost">I run agents →</a>
+  </div>
+</section>
+
+<section class="doors">
+  <div class="door creator">
+    <h3>For writers &amp; publishers</h3>
+    <p>List your articles, set a price per citation, and earn whenever an AI agent uses your work. No subscriptions, no ads. We can set up a wallet for you — no crypto knowledge needed.</p>
+    <a href="/auth.html?mode=create&role=creator" class="linklike">Start earning →</a>
+  </div>
+  <div class="door operator">
+    <h3>For research teams &amp; agents</h3>
+    <p>Give your agent a budget and a policy, and let it pay sources per use — transparently, within rules you set, with a receipt for every citation. Pay only for what's worth it.</p>
+    <a href="/auth.html?mode=create&role=operator" class="linklike blue">Run an agent →</a>
+  </div>
+</section>
+
+<section class="how">
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="n">01</div><div class="t">Creators list work</div><div class="d">Connect a feed, set a sub-cent price, add a wallet.</div></div>
+    <div class="step"><div class="n">02</div><div class="t">Agents decide</div><div class="d">A budgeted agent picks which permitted source is worth paying for.</div></div>
+    <div class="step"><div class="n">03</div><div class="t">Verified settlement</div><div class="d">Payment releases on Arc only after delivery is verified.</div></div>
+    <div class="step"><div class="n">04</div><div class="t">Proof of earning</div><div class="d">Every citation leaves a tamper-evident receipt the creator can see.</div></div>
+  </div>
+</section>
+
+<footer>See it working on real data → <a href="/traction.html">live traction</a></footer>
+
+<script src="/app.js"></script>
+<script>PS.header('home');</script>
+</body>
+</html>
