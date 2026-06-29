@@ -28,7 +28,7 @@ export interface Env {
 }
 
 function hasCircleCreds(): boolean {
-  return Boolean(process.env.CIRCLE_API_KEY && process.env.PLATFORM_WALLET_ADDRESS);
+  return Boolean(process.env.AGENT_PRIVATE_KEY && process.env.PLATFORM_WALLET_ADDRESS);
 }
 
 export function loadEnv(): Env {
@@ -56,7 +56,6 @@ export function loadEnv(): Env {
   if (env.paymentMode === "arc_testnet") {
     const missing: string[] = [];
     if (!env.agentPrivateKey) missing.push("AGENT_PRIVATE_KEY");
-    if (!env.circleApiKey)    missing.push("CIRCLE_API_KEY");
     if (!env.platformWallet)  missing.push("PLATFORM_WALLET_ADDRESS");
     if (missing.length) {
       console.error(`[ProofSource] arc_testnet mode active but missing: ${missing.join(", ")}`);

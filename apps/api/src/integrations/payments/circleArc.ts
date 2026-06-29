@@ -25,9 +25,9 @@ export class CircleArcAdapter implements PaymentAdapter {
   mode = "arc_testnet" as const;
 
   private assertConfigured() {
-    if (!env.circleApiKey || !env.platformWallet) {
+    if (!env.agentPrivateKey || !env.platformWallet) {
       throw new Error(
-        "CircleArcAdapter not configured: set CIRCLE_API_KEY and PLATFORM_WALLET_ADDRESS"
+        "CircleArcAdapter not configured: set AGENT_PRIVATE_KEY and PLATFORM_WALLET_ADDRESS"
       );
     }
   }

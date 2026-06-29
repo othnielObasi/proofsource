@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Standalone: one real sub-cent USDC payment on Arc via Circle Gateway (x402 batched).",
   "scripts": {
+    "deposit": "tsx src/deposit.ts",
     "seller": "tsx src/seller.ts",
     "buyer": "tsx src/buyer.ts"
   },
