@@ -27,6 +27,7 @@ window.PS_API = (function () {
 
   async function runAgent(body)  { return request('/demo/research-agent/run', { method: 'POST', body: JSON.stringify(body) }); }
   async function getMandate(wsId) { return request('/mandate?workspaceId=' + (wsId || 'ws_demo')); }
+  async function getReceipt(id)   { return request('/receipts/' + id); }
   async function setMandate(body) { return request('/mandate', { method: 'PUT', body: JSON.stringify(body) }); }
   async function seed()           { return request('/demo/seed', { method: 'POST' }); }
 
@@ -36,7 +37,7 @@ window.PS_API = (function () {
   async function traction() { return request('/dashboard/traction'); }
   async function buyerDash() { return request('/dashboard/buyer'); }
 
-  return { getToken, setToken, request, register, login, me, wallet, runAgent, getMandate, setMandate, seed, earnings, connectFeed, traction, buyerDash };
+  return { getToken, setToken, request, register, login, me, wallet, runAgent, getMandate, setMandate, seed, earnings, connectFeed, traction, buyerDash, getReceipt };
 })();
 
 window.Store = (function () {

@@ -316,7 +316,15 @@ export async function registerRoutes(app: FastifyInstance) {
   // Operator mandate — the human-set policy the agent obeys.
   app.get<{ Querystring: { workspaceId?: string } }>("/v1/proofsource/mandate", async (req) => {
     const ws = store.workspaces.get(req.query.workspaceId ?? "ws_demo");
-    return ws ? ws.mandate : { error: "unknown workspace" };
+    if (!ws) return { error: "unknown workspace" };
+    return { ...ws.mandate, budgetRemainingUsdc: ws.budgetUsdc };
+  });
+
+  // Receipt by ID — includes chain reference (Arc explorer URL) for settled payments.
+  app.get<{ Params: { id: string } }>("/v1/proofsource/receipts/:id", async (req, reply) => {
+    const receipt = store.receipts.get(req.params.id);
+    if (!receipt) return reply.code(404).send({ error: "receipt not found" });
+    return receipt;
   });
   app.put<{ Body: { workspaceId?: string } & Partial<OperatorMandate> }>(
     "/v1/proofsource/mandate", async (req) => {

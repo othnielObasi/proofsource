@@ -40,17 +40,28 @@ function AppConsole({ go }) {
   const { mandate, spent, runs } = operator;
   const totals = window.Store.operatorTotals();
 
+  const workspaceId = session?.workspaceId || 'ws_demo';
+
   const [question, setQuestion] = useState('');
   const [running, setRunning] = useState(false);
   const [reached, setReached] = useState(-1);
   const [editMandate, setEditMandate] = useState(false);
   const [mandateDraft, setMandateDraft] = useState(mandate);
   const [error, setError] = useState('');
+  const [apiRemaining, setApiRemaining] = useState(null); // real remaining budget from API
 
-  // Real result from the API (null until a run completes)
+  // Load real mandate + remaining budget from API on mount
+  useEffect(() => {
+    window.PS_API.getMandate(workspaceId).then((m) => {
+      if (m.error) return;
+      window.Store.setMandate({ budget: Number(m.budgetUsdc || mandate.budget), ceiling: Number(m.perTaskMaxUsdc || mandate.ceiling), maxPer: Number(m.maxPricePerSourceUsdc || mandate.maxPer), requireCite: m.requireCitation ?? mandate.requireCite });
+      if (m.budgetRemainingUsdc != null) setApiRemaining(Number(m.budgetRemainingUsdc));
+    }).catch(() => {});
+  }, [workspaceId]);
+
   const [result, setResult] = useState(null);
-  // Steps replayed from the real trace
   const [replaySteps, setReplaySteps] = useState([]);
+  const [receiptChain, setReceiptChain] = useState(null); // { explorerUrl, transactionHash }
 
   const steps = replaySteps.length > 0 ? replaySteps : PS_DATA.runs.licensing.pipeline;
   const done = result && reached >= steps.length && reached > 0;
@@ -68,36 +79,26 @@ function AppConsole({ go }) {
   async function startRun() {
     const q = question.trim();
     if (!q) return;
-    setError('');
-    setResult(null);
-    setReached(0);
-    setRunning(true);
-
+    setError(''); setResult(null); setReceiptChain(null); setReached(0); setRunning(true);
     try {
-      // Seed demo data on first run if workspace not ready
       await window.PS_API.seed().catch(() => {});
-
-      const data = await window.PS_API.runAgent({
-        workspaceId: 'ws_demo',
-        agentId: 'agent_research_01',
-        question: q,
-      });
+      const data = await window.PS_API.runAgent({ workspaceId, agentId: 'agent_research_01', question: q });
       setResult(data);
-
-      // Map real trace to pipeline step labels
-      const realSteps = (data.trace || []).map((t) => ({
-        label: t.step.charAt(0).toUpperCase() + t.step.slice(1),
-        status: t.status,
-        detail: t.detail,
-      }));
+      const realSteps = (data.trace || []).map((t) => ({ label: t.step.charAt(0).toUpperCase() + t.step.slice(1), status: t.status, detail: t.detail }));
       setReplaySteps(realSteps.length > 0 ? realSteps : PS_DATA.runs.licensing.pipeline);
       setReached(0);
-
-      // Record in local history
       const action = data.decision?.action || 'SKIP';
       const amount = Number(data.spend?.totalUsdc || 0);
       window.Store.recordRun({ q, action, amount, paid: data.sources?.[0]?.providerName || null, verified: data.sources?.[0]?.paymentStatus === 'released' });
-
+      // Update remaining budget from API response
+      if (data.decision?.budgetRemainingUsdc != null) setApiRemaining(Number(data.decision.budgetRemainingUsdc));
+      // Fetch receipt to get Arc explorer URL
+      const receiptId = data.sources?.[0]?.receiptId;
+      if (receiptId) {
+        window.PS_API.request('/receipts/' + receiptId).then((r) => {
+          if (r.chainReference?.explorerUrl) setReceiptChain(r.chainReference);
+        }).catch(() => {});
+      }
     } catch (err) {
       setError(err.message || 'Agent run failed.');
       setRunning(false);
@@ -106,8 +107,8 @@ function AppConsole({ go }) {
   }
 
   async function saveMandate() {
-    const patch = { workspaceId: 'ws_demo', budgetUsdc: String(mandateDraft.budget), perTaskMaxUsdc: String(mandateDraft.ceiling), maxPricePerSourceUsdc: String(mandateDraft.maxPer), requireCitation: mandateDraft.requireCite };
-    try { await window.PS_API.setMandate(patch); } catch {}
+    const patch = { workspaceId, budgetUsdc: String(mandateDraft.budget), perTaskMaxUsdc: String(mandateDraft.ceiling), maxPricePerSourceUsdc: String(mandateDraft.maxPer), requireCitation: mandateDraft.requireCite };
+    try { await window.PS_API.setMandate(patch); setApiRemaining(+mandateDraft.budget); } catch {}
     window.Store.setMandate({ budget: +mandateDraft.budget, ceiling: +mandateDraft.ceiling, maxPer: +mandateDraft.maxPer, requireCite: mandateDraft.requireCite });
     setEditMandate(false);
   }
@@ -128,10 +129,10 @@ function AppConsole({ go }) {
   const paidSource = result?.sources?.[0];
   const receiptId = paidSource?.receiptId;
   const deliveryHash = paidSource?.deliveryHash;
-  const explorerUrl = null; // populated after real Arc settlement
   const settledAmount = Number(result?.spend?.totalUsdc || 0);
-  const budgetPct = Math.min(100, Math.round((spent / mandate.budget) * 100));
-  const remaining = Math.max(0, mandate.budget - spent);
+  const remaining = apiRemaining !== null ? apiRemaining : Math.max(0, mandate.budget - spent);
+  const budgetPct = Math.min(100, Math.round(((mandate.budget - remaining) / mandate.budget) * 100));
+  const explorerUrl = receiptChain?.explorerUrl || null;
 
   const fieldS = { background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 9, padding: '9px 12px', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 13, width: '100%', outline: 'none' };
   const labS = { fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, display: 'block', marginBottom: 5 };
@@ -316,7 +317,7 @@ function AppConsole({ go }) {
                 { k: 'amount',   v: '$' + settledAmount.toFixed(6) },
                 { k: 'delivery', v: deliveryHash ? deliveryHash.slice(0, 18) + '…' : '—' },
                 { k: 'receipt',  v: receiptId },
-                ...(explorerUrl ? [{ k: 'explorer', v: explorerUrl }] : []),
+                ...(explorerUrl ? [{ k: 'arc tx', v: <a href={explorerUrl} target="_blank" rel="noopener" style={{ color: 'var(--buy)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>{receiptChain?.transactionHash?.slice(0, 14)}…</a> }] : []),
               ]}
               amount={'$' + settledAmount.toFixed(3)}
               style={{ transform: 'none', width: '100%', borderRadius: 11 }}
