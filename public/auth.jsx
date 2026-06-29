@@ -10,6 +10,8 @@ function Auth({ go, initialMode, initialRole }) {
   const [pw, setPw]       = useState('');
   const [err, setErr]     = useState('');
   const [busy, setBusy]   = useState(false);
+  const [apiKeyReveal, setApiKeyReveal] = useState(null); // { key, acct } — shown after operator register
+  const [keyCopied, setKeyCopied] = useState(false);
 
   function validate() {
     if (!email.trim()) return 'Enter your email address.';
@@ -33,7 +35,11 @@ function Auth({ go, initialMode, initialRole }) {
         data = await window.PS_API.login({ email: email.trim(), password: pw });
       }
       const acct = data.account;
-      window.Store.signIn({ name: acct.name, email: acct.email, role: acct.role, providerId: acct.providerId, walletAddress: acct.walletAddress, walletKind: acct.walletKind });
+      if (mode === 'create' && acct.role === 'operator' && data.apiKey) {
+        setApiKeyReveal({ key: data.apiKey, acct });
+      } else {
+        window.Store.signIn({ name: acct.name, email: acct.email, role: acct.role, providerId: acct.providerId, walletAddress: acct.walletAddress, walletKind: acct.walletKind, apiKey: data.apiKey || null });
+      }
     } catch (err) {
       setErr(err.data?.error || err.message || 'Something went wrong. Try again.');
     } finally {
@@ -145,9 +151,53 @@ function Auth({ go, initialMode, initialRole }) {
 
         {/* Trust line */}
         <div style={{ marginTop: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--faint)', fontSize: 11.5, fontFamily: 'var(--font-mono)' }}>
-          <span>scrypt-hashed</span><span>·</span><span>bearer tokens</span><span>·</span><span>wallet connects after sign-in</span>
+          <span>scrypt-hashed</span><span>·</span><span>JWT sessions</span><span>·</span><span>wallet connects after sign-in</span>
         </div>
       </div>
+
+      {/* API key reveal — operator registration */}
+      {apiKeyReveal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.82)', backdropFilter: 'blur(10px)', zIndex: 300, display: 'grid', placeItems: 'center', padding: 24 }}>
+          <div style={{ background: '#0E1420', border: '1px solid rgba(91,192,235,.22)', borderRadius: 18, padding: 32, width: 'min(480px,100%)', boxShadow: '0 24px 80px rgba(0,0,0,.6)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+              <span style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(91,192,235,.12)', border: '1px solid rgba(91,192,235,.25)', display: 'grid', placeItems: 'center' }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--buy)', boxShadow: 'var(--glow-buy)' }} />
+              </span>
+              <div>
+                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 600 }}>Your API key</div>
+                <div style={{ fontSize: 12, color: 'var(--mut)' }}>Save this — it won't be shown again</div>
+              </div>
+            </div>
+
+            <div style={{ background: '#06080d', border: '1px solid rgba(91,192,235,.15)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+              <div style={{ fontSize: 10, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700, marginBottom: 8 }}>Operator key</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13.5, color: 'var(--buy)', wordBreak: 'break-all', letterSpacing: '.02em' }}>{apiKeyReveal.key}</div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 9, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: 'var(--mut)', lineHeight: 1.5 }}>
+              Use this key to call the agent from your code, SDK, or MCP server:<br />
+              <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text)' }}>x-proofsource-key: {apiKeyReveal.key}</code>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Btn variant="primary" style={{ flex: 1 }} onClick={() => {
+                navigator.clipboard.writeText(apiKeyReveal.key).catch(() => {});
+                setKeyCopied(true);
+                setTimeout(() => {
+                  window.Store.signIn({ name: apiKeyReveal.acct.name, email: apiKeyReveal.acct.email, role: apiKeyReveal.acct.role, providerId: apiKeyReveal.acct.providerId, walletAddress: apiKeyReveal.acct.walletAddress, walletKind: apiKeyReveal.acct.walletKind, apiKey: apiKeyReveal.key });
+                  setApiKeyReveal(null);
+                }, 800);
+              }}>
+                {keyCopied ? 'Copied — continuing…' : 'Copy key & continue'}
+              </Btn>
+              <Btn variant="ghost" onClick={() => {
+                window.Store.signIn({ name: apiKeyReveal.acct.name, email: apiKeyReveal.acct.email, role: apiKeyReveal.acct.role, providerId: apiKeyReveal.acct.providerId, walletAddress: apiKeyReveal.acct.walletAddress, walletKind: apiKeyReveal.acct.walletKind, apiKey: apiKeyReveal.key });
+                setApiKeyReveal(null);
+              }}>Skip</Btn>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

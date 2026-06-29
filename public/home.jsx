@@ -95,6 +95,18 @@ const HOW = [
 ];
 
 function Home({ go }) {
+  const [traction, setTraction] = useState(null);
+
+  useEffect(() => {
+    window.PS_API.traction().then(setTraction).catch(() => {});
+  }, []);
+
+  const fmt = (n, d = 4) => n != null ? '$' + Number(n).toFixed(d) : '—';
+  const platPaid    = traction ? fmt(traction.totalPayoutUsdc) : '…';
+  const platCount   = traction ? Number(traction.paymentCount).toLocaleString() : '…';
+  const platAvg     = traction ? fmt(traction.avgTransactionUsdc, 4) : '…';
+  const platEarning = traction ? String(traction.creatorsEarning) : '…';
+
   return (
     <div className="page">
       {/* HERO */}
@@ -120,14 +132,14 @@ function Home({ go }) {
 
       <Ticker />
 
-      {/* METRICS BAND */}
+      {/* METRICS BAND — real from API */}
       <section style={{ maxWidth: 1180, margin: '0 auto', padding: '20px 26px 44px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14 }} className="metrics-grid">
           {[
-            { label: 'Paid to creators', val: '$4.9112', tone: 'earned', sub: 'USDC, all-time' },
-            { label: 'Settlements',      val: '1,793',   tone: 'buy',    sub: 'autonomous, on-chain' },
-            { label: 'Avg payment',      val: '$0.0027', tone: null,     sub: 'per citation' },
-            { label: 'Creators earning', val: '42',      tone: 'earned', sub: 'distinct paid sources' },
+            { label: 'Paid to creators', val: platPaid,    tone: 'earned', sub: 'USDC, all-time' },
+            { label: 'Settlements',      val: platCount,   tone: 'buy',    sub: 'autonomous, on-chain' },
+            { label: 'Avg payment',      val: platAvg,     tone: null,     sub: 'per citation' },
+            { label: 'Creators earning', val: platEarning, tone: 'earned', sub: 'distinct paid sources' },
           ].map(({ label, val, tone, sub }, i) => (
             <div key={i} style={{ padding: '22px 26px', borderLeft: i ? '1px solid rgba(255,255,255,.07)' : 'none' }}>
               <div style={{ fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700 }}>{label}</div>
@@ -148,7 +160,7 @@ function Home({ go }) {
           </div>
         </div>
         <div>
-          <Receipt title="Paid Ada Powell" rows={[{ k: 'source', v: 'per-use licensing' }, { k: 'delivery', v: 'sha256:9f3a…c01b' }, { k: 'receipt', v: 'rcpt_8821…4f' }]} amount="$0.002" />
+          <Receipt title="Verified settlement" rows={[{ k: 'content', v: 'AI licensing · per-use' }, { k: 'delivery', v: '7-check verified' }, { k: 'settled on', v: 'Arc · USDC' }]} amount="$0.002" />
         </div>
       </section>
 

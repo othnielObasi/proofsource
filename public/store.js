@@ -36,8 +36,9 @@ window.PS_API = (function () {
 
   async function traction() { return request('/dashboard/traction'); }
   async function buyerDash() { return request('/dashboard/buyer'); }
+  async function receipts() { return request('/receipts'); }
 
-  return { getToken, setToken, request, register, login, me, wallet, runAgent, getMandate, setMandate, seed, earnings, connectFeed, traction, buyerDash, getReceipt };
+  return { getToken, setToken, request, register, login, me, wallet, runAgent, getMandate, setMandate, seed, earnings, connectFeed, traction, buyerDash, getReceipt, receipts };
 })();
 
 window.Store = (function () {
@@ -83,8 +84,8 @@ window.Store = (function () {
   function hash(n) { const c = '0123456789abcdef'; let s = ''; for (let i = 0; i < n; i++) s += c[Math.floor(Math.random() * 16)]; return s; }
 
   /* ---------- auth ---------- */
-  function signIn({ name, email, role, providerId, walletAddress, walletKind }) {
-    set({ session: { name: name || (role === 'creator' ? 'Ada Powell' : 'Northwind Research'), email: email || '', role, providerId: providerId || null, wallet: walletAddress || (state.session && state.session.wallet) || null, walletKind: walletKind || (state.session && state.session.walletKind) || null } });
+  function signIn({ name, email, role, providerId, walletAddress, walletKind, apiKey }) {
+    set({ session: { name: name || (role === 'creator' ? 'Ada Powell' : 'Northwind Research'), email: email || '', role, providerId: providerId || null, wallet: walletAddress || (state.session && state.session.wallet) || null, walletKind: walletKind || (state.session && state.session.walletKind) || null, apiKey: apiKey || (state.session && state.session.apiKey) || null } });
   }
   function signOut() { window.PS_API.setToken(null); set({ session: null }); }
 

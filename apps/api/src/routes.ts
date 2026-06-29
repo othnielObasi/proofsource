@@ -377,7 +377,14 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/v1/proofsource/dashboard/traction", async () => computeTraction(env.paymentMode));
 
   // Receipts, paid contexts, audit, dashboards
-  app.get("/v1/proofsource/receipts", async () => [...store.receipts.values()]);
+  app.get("/v1/proofsource/receipts", async () =>
+    [...store.receipts.values()].slice(-24).reverse().map((r) => ({
+      ...r,
+      providerName: store.providers.get(r.providerId)?.name ?? r.providerId,
+      resourceTitle: store.resources.get(r.resourceId)?.title ?? r.resourceId,
+      amountUsdc: store.authorizations.get(r.authorizationId)?.amountUsdc ?? "0",
+    }))
+  );
   app.get("/v1/proofsource/paid-contexts", async () => [...store.paidContexts.values()]);
   app.get("/v1/proofsource/audit", async () => store.auditEvents);
 

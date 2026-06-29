@@ -56,9 +56,31 @@ function Sidebar({ session, page, go }) {
             <div style={{ fontSize: 11, color: 'var(--faint)', marginTop: 1 }}>{session.role}</div>
           </div>
         </div>
-        <div onClick={() => { window.Store.signOut(); go('home'); }} style={{ fontSize: 12.5, color: 'var(--faint)', cursor: 'pointer', padding: '6px 8px', borderRadius: 6, background: 'rgba(255,255,255,.04)', textAlign: 'center', transition: 'background .15s' }}>Sign out</div>
+        {!isCreator && session.apiKey && <ApiKeyBadge apiKey={session.apiKey} />}
+        <div onClick={() => { window.Store.signOut(); go('home'); }} style={{ fontSize: 12.5, color: 'var(--faint)', cursor: 'pointer', padding: '6px 8px', borderRadius: 6, background: 'rgba(255,255,255,.04)', textAlign: 'center', transition: 'background .15s', marginTop: 8 }}>Sign out</div>
       </div>
     </aside>
+  );
+}
+
+function ApiKeyBadge({ apiKey }) {
+  const [show, setShow] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const display = show ? apiKey : apiKey.slice(0, 12) + '…';
+  function copy() {
+    navigator.clipboard.writeText(apiKey).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  }
+  return (
+    <div style={{ marginBottom: 8, background: 'rgba(91,192,235,.05)', border: '1px solid rgba(91,192,235,.15)', borderRadius: 8, padding: '8px 10px' }}>
+      <div style={{ fontSize: 9.5, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700, marginBottom: 4 }}>API key</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--buy)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{display}</div>
+        <span onClick={() => setShow((s) => !s)} style={{ cursor: 'pointer', fontSize: 10, color: 'var(--faint)', flexShrink: 0 }}>{show ? 'hide' : 'show'}</span>
+        <span onClick={copy} style={{ cursor: 'pointer', fontSize: 10, color: copied ? 'var(--earned2)' : 'var(--faint)', flexShrink: 0 }}>{copied ? '✓' : 'copy'}</span>
+      </div>
+    </div>
   );
 }
 
