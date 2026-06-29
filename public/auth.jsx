@@ -33,7 +33,7 @@ function Auth({ go, initialMode, initialRole }) {
         data = await window.PS_API.login({ email: email.trim(), password: pw });
       }
       const acct = data.account;
-      window.Store.signIn({ name: acct.name, email: acct.email, role: acct.role, providerId: acct.providerId });
+      window.Store.signIn({ name: acct.name, email: acct.email, role: acct.role, providerId: acct.providerId, walletAddress: acct.walletAddress, walletKind: acct.walletKind });
     } catch (err) {
       setErr(err.data?.error || err.message || 'Something went wrong. Try again.');
     } finally {

@@ -82,8 +82,8 @@ window.Store = (function () {
   function hash(n) { const c = '0123456789abcdef'; let s = ''; for (let i = 0; i < n; i++) s += c[Math.floor(Math.random() * 16)]; return s; }
 
   /* ---------- auth ---------- */
-  function signIn({ name, email, role, providerId }) {
-    set({ session: { name: name || (role === 'creator' ? 'Ada Powell' : 'Northwind Research'), email: email || '', role, providerId: providerId || null, wallet: state.session && state.session.wallet, walletKind: state.session && state.session.walletKind } });
+  function signIn({ name, email, role, providerId, walletAddress, walletKind }) {
+    set({ session: { name: name || (role === 'creator' ? 'Ada Powell' : 'Northwind Research'), email: email || '', role, providerId: providerId || null, wallet: walletAddress || (state.session && state.session.wallet) || null, walletKind: walletKind || (state.session && state.session.walletKind) || null } });
   }
   function signOut() { window.PS_API.setToken(null); set({ session: null }); }
 

@@ -7,11 +7,17 @@ function AppCreator({ go }) {
   const [feedPrice, setFeedPrice] = useState('');
   const [listing, setListing] = useState(false);
   const [listed, setListed] = useState(null); // null | number (count)
+  const [feedErr, setFeedErr] = useState('');
   const [showWallet, setShowWallet] = useState(false);
   const [connecting, setConnecting] = useState(null);
   const [walletErr, setWalletErr] = useState('');
   const [earningsData, setEarningsData] = useState(null); // real API data
   const [loadingEarnings, setLoadingEarnings] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [withdrawAddr, setWithdrawAddr] = useState('');
+  const [withdrawAmt, setWithdrawAmt] = useState('');
+  const [withdrawBusy, setWithdrawBusy] = useState(false);
+  const [withdrawResult, setWithdrawResult] = useState(null); // null | { txId } | { error }
 
   const providerId = session?.providerId;
 
@@ -106,23 +112,40 @@ function AppCreator({ go }) {
   async function submitFeed(e) {
     e && e.preventDefault();
     if (!feedUrl.trim() && !feedPrice) return;
-    setListing(true);
+    setListing(true); setFeedErr('');
     try {
       const body = feedUrl.trim()
         ? { feedUrl: feedUrl.trim(), priceUsdc: feedPrice || undefined }
         : { sample: true, priceUsdc: feedPrice || undefined };
       const data = await window.PS_API.connectFeed(body);
-      setListed(data.listed || 1);
+      setListed(data.listed || 0);
       setFeedUrl(''); setFeedPrice('');
-      // Reload earnings
       if (providerId) {
         const updated = await window.PS_API.earnings(providerId);
         setEarningsData(updated);
       }
-    } catch {
-      setListed(0);
+    } catch (e) {
+      setFeedErr(e.data?.error || e.message || 'Failed to list feed.');
+      setListed(null);
     } finally {
       setListing(false);
+    }
+  }
+
+  async function submitWithdraw(e) {
+    e && e.preventDefault();
+    if (!withdrawAddr.trim() || !withdrawAmt.trim()) return;
+    setWithdrawBusy(true); setWithdrawResult(null);
+    try {
+      const data = await window.PS_API.request('/creators/' + providerId + '/withdraw', {
+        method: 'POST',
+        body: JSON.stringify({ destinationAddress: withdrawAddr.trim(), amountUsdc: withdrawAmt.trim() }),
+      });
+      setWithdrawResult({ txId: data.txId, amountUsdc: data.amountUsdc });
+    } catch (e) {
+      setWithdrawResult({ error: e.data?.error || e.message || 'Withdrawal failed.' });
+    } finally {
+      setWithdrawBusy(false);
     }
   }
 
@@ -150,7 +173,7 @@ function AppCreator({ go }) {
           </div>
           <div style={{ color: 'var(--mut)', fontSize: 13, marginTop: 6 }}>{cites.toLocaleString()} verified citations · avg {avg > 0 ? '$' + avg.toFixed(4) : '—'} each</div>
         </div>
-        <Btn variant="earn" onClick={() => {}} style={{ opacity: earned > 0 ? 1 : 0.45, marginTop: 4 }}>Withdraw to wallet</Btn>
+        <Btn variant="earn" onClick={() => { setWithdrawResult(null); setShowWithdraw(true); }} style={{ opacity: (earned > 0 && creator.walletKind === 'managed') ? 1 : 0.45, marginTop: 4 }} title={creator.walletKind !== 'managed' ? 'Funds arrive directly to your connected wallet' : ''}>Withdraw to wallet</Btn>
       </div>
 
       {/* ── Wallet ──────────────────────────────────────────── */}
@@ -192,7 +215,8 @@ function AppCreator({ go }) {
             <Btn variant="earn" type="submit" disabled={listing} style={{ height: 42 }}>{listing ? 'Listing…' : 'List feed'}</Btn>
           </div>
           {listed !== null && listed > 0 && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--earned)', fontFamily: 'var(--font-mono)' }}>✓ {listed} piece(s) listed. Agents can now cite and pay for your work.</div>}
-          {listed === 0 && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--skip)', fontFamily: 'var(--font-mono)' }}>Feed listed (0 items parsed — check the URL).</div>}
+          {listed === 0 && !feedErr && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--skip)', fontFamily: 'var(--font-mono)' }}>Feed listed (0 items parsed — check the URL).</div>}
+          {feedErr && <div style={{ marginTop: 10, padding: '9px 12px', background: 'rgba(220,60,40,.08)', border: '1px solid rgba(220,60,40,.25)', borderRadius: 8, color: '#f4a09a', fontSize: 13 }}>{feedErr}</div>}
         </form>
       </div>
 
@@ -260,6 +284,47 @@ function AppCreator({ go }) {
           </div>
         </div>
       </div>
+
+      {/* ── Withdraw overlay ────────────────────────────────── */}
+      {showWithdraw && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.76)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'grid', placeItems: 'center', padding: 24 }}
+          onClick={(e) => { if (e.target === e.currentTarget && !withdrawBusy) { setShowWithdraw(false); } }}>
+          <div style={{ background: '#0E1420', border: '1px solid var(--line)', borderRadius: 16, padding: 28, width: 'min(440px,100%)', boxShadow: 'var(--shadow)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Withdraw earnings</div>
+            {creator.walletKind !== 'managed' ? (
+              <div style={{ fontSize: 13, color: 'var(--mut)', lineHeight: 1.6 }}>
+                Your wallet is externally connected — USDC settlements land directly in <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text)', fontSize: 12 }}>{creator.wallet}</span>. No action needed.
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, color: 'var(--mut)', marginBottom: 20 }}>Send USDC from your managed ProofSource wallet to any address on Arc.</div>
+                {!withdrawResult ? (
+                  <form onSubmit={submitWithdraw}>
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ display: 'block', fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, marginBottom: 6 }}>Destination address</label>
+                      <input value={withdrawAddr} onChange={(e) => setWithdrawAddr(e.target.value)} placeholder="0x..." style={{ ...inp, width: '100%', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, marginBottom: 6 }}>Amount (USDC)</label>
+                      <input value={withdrawAmt} onChange={(e) => setWithdrawAmt(e.target.value)} placeholder={earned.toFixed(6)} style={{ ...inp, width: '100%', boxSizing: 'border-box', fontFamily: 'var(--font-mono)' }} />
+                    </div>
+                    <Btn variant="earn" type="submit" disabled={withdrawBusy} style={{ width: '100%' }}>{withdrawBusy ? 'Sending…' : 'Send USDC'}</Btn>
+                  </form>
+                ) : withdrawResult.error ? (
+                  <div style={{ padding: '12px 14px', background: 'rgba(220,60,40,.08)', border: '1px solid rgba(220,60,40,.25)', borderRadius: 9, color: '#f4a09a', fontSize: 13 }}>{withdrawResult.error}</div>
+                ) : (
+                  <div style={{ padding: '14px 16px', background: 'var(--earned-fill)', border: '1px solid var(--earned-line)', borderRadius: 10 }}>
+                    <div style={{ color: 'var(--earned)', fontWeight: 600, marginBottom: 6 }}>✓ Withdrawal submitted</div>
+                    <div style={{ fontSize: 12, color: 'var(--mut)', fontFamily: 'var(--font-mono)' }}>{withdrawResult.amountUsdc} USDC · tx {withdrawResult.txId?.slice(0, 16)}…</div>
+                    <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>Circle will settle on Arc testnet within ~30s.</div>
+                  </div>
+                )}
+              </>
+            )}
+            <button onClick={() => { if (!withdrawBusy) setShowWithdraw(false); }} style={{ marginTop: 18, background: 'none', border: 'none', color: 'var(--faint)', fontSize: 13, cursor: withdrawBusy ? 'default' : 'pointer', width: '100%', textAlign: 'center' }}>Close</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Wallet selector overlay ──────────────────────────── */}
       {showWallet && (
