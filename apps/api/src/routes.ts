@@ -378,8 +378,6 @@ export async function registerRoutes(app: FastifyInstance) {
 
   // Receipts, paid contexts, audit, dashboards
   app.get("/v1/proofsource/receipts", async () => [...store.receipts.values()]);
-  app.get<{ Params: { receiptId: string } }>("/v1/proofsource/receipts/:receiptId",
-    async (req) => store.receipts.get(req.params.receiptId) ?? { error: "not found" });
   app.get("/v1/proofsource/paid-contexts", async () => [...store.paidContexts.values()]);
   app.get("/v1/proofsource/audit", async () => store.auditEvents);
 
