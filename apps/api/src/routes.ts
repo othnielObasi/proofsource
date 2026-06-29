@@ -264,10 +264,14 @@ export async function registerRoutes(app: FastifyInstance) {
     };
   });
 
-  // Managed wallet: live Circle balance for the creator
+  // Managed wallet: live Circle balance — only the owning creator can query this
   app.get<{ Params: { id: string } }>("/v1/proofsource/creators/:id/balance", async (req, reply) => {
+    const caller = auth.accountFromToken(req.headers.authorization);
+    if (!caller) return reply.code(401).send({ error: "not authenticated" });
     const provider = store.providers.get(req.params.id);
     if (!provider) return reply.code(404).send({ error: "creator not found" });
+    // Only the creator who owns this provider record can see its balance
+    if (caller.providerId !== provider.id) return reply.code(403).send({ error: "forbidden" });
     if (!provider.circleWalletId) return reply.code(400).send({ error: "no managed wallet — creator uses an external wallet" });
     try {
       const balance = await getWalletBalance(provider.circleWalletId);
@@ -277,11 +281,14 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  // Managed wallet: withdraw USDC to an external address
+  // Managed wallet: withdraw USDC — only the owning creator can initiate
   app.post<{ Params: { id: string }; Body: { destinationAddress: string; amountUsdc: string } }>(
     "/v1/proofsource/creators/:id/withdraw", async (req, reply) => {
+      const caller = auth.accountFromToken(req.headers.authorization);
+      if (!caller) return reply.code(401).send({ error: "not authenticated" });
       const provider = store.providers.get(req.params.id);
       if (!provider) return reply.code(404).send({ error: "creator not found" });
+      if (caller.providerId !== provider.id) return reply.code(403).send({ error: "forbidden" });
       if (!provider.circleWalletId) return reply.code(400).send({ error: "no managed wallet" });
       const { destinationAddress, amountUsdc } = req.body ?? {};
       if (!destinationAddress || !amountUsdc) return reply.code(400).send({ error: "destinationAddress and amountUsdc required" });
