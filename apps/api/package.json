@@ -14,9 +14,11 @@
     "reconcile": "tsx scripts/reconcile.ts"
   },
   "dependencies": {
+    "@circle-fin/x402-batching": "^3.0.4",
     "@fastify/static": "^7.0.4",
     "fast-xml-parser": "^4.5.6",
-    "fastify": "^4.28.1"
+    "fastify": "^4.28.1",
+    "viem": "^2.53.1"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",

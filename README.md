@@ -220,9 +220,9 @@ Metrics are computed from settled receipts (`src/modules/metrics/traction.ts`) a
 
 Payment runs through a `PaymentAdapter` seam (`src/integrations/payments/`). `PAYMENT_MODE` **auto-selects `arc_testnet` when Circle credentials are present**, falling back to `mock` only for CI/offline — the inverse of a mock-first design. The real settlement path is wired against the **published Circle SDK** (verified Jun 2026):
 
-- buyer (`gateway.ts` / `CircleArcAdapter`): `@circle-fin/x402-batching` `BatchEvmScheme` + `@x402/core` `x402HTTPClient` sign an EIP-3009 authorization via `viem` and settle gas-free through Gateway on Arc;
-- seller (creator endpoint): `@x402/express` `paymentMiddleware` + `BatchFacilitatorClient({ url })` → Circle Gateway `verify`/`settle`;
-- `settle()` returns the on-chain `transaction`, recorded on `receipt.chainReference`.
+- buyer (`gateway.ts` / `CircleArcAdapter`): `@circle-fin/x402-batching` `GatewayClient.pay(resourceUrl)` handles the full x402 handshake — 402 challenge → signed payment → 200 content — gas-free through Circle Gateway on Arc. Returns an on-chain `transaction` recorded on `receipt.chainReference`.
+- seller (creator endpoint): `BatchFacilitatorClient({ url })` → Circle Gateway `verify`/`settle`; manually builds the `PAYMENT-REQUIRED` header (Circle testnet does not yet advertise Arc chain ID in `/supported`, so `x402ResourceServer` is bypassed).
+- `PAYMENT_MODE` auto-selects `arc_testnet` when `AGENT_PRIVATE_KEY` + `PLATFORM_WALLET_ADDRESS` are set. `CIRCLE_API_KEY` is **not required** for `GatewayClient.pay()`.
 
 **A standalone, runnable proof lives in `examples/arc-live/`** — a creator seller + paying agent buyer you can point at Arc testnet to produce one real sub-cent settlement (the day-3 gate in `docs/PLAN.md`). Both it and the core API typecheck clean against the real packages.
 
@@ -256,9 +256,9 @@ question
 ## Honest status
 
 - **Runs today, zero credentials:** full loop, reuse, skip, operator mandate, per-source verdicts, idempotency, audit, dashboards, console, the RSS/RSSHub connector, the traction harness, durable persistence, **and the creator self-serve experience (onboarding + earnings)** — proven by `npm run smoke`, `npm run rss:demo`, and `npm run harness`, with `npm run typecheck` clean.
-- **Wired against the real SDK, pending live creds:** Gateway settlement in `gateway.ts`/`CircleArcAdapter` and the `examples/arc-live` seller+buyer compile against the published Circle packages; they need a funded Arc-testnet wallet (USDC deposited into Gateway) to produce live settlements. Persistence swap from in-memory store to Prisma/Postgres is schema-complete (store mirrors it 1:1).
-- **Confirm-at-integration (noted in `examples/arc-live/README.md`):** the buyer signer adapter for `BatchEvmScheme` and exact testnet Gateway base URL / Arc chain id.
-- **Next (see `docs/PLAN.md`):** first real testnet settlement (day 3) + a real source connector (RSSHub/Ghost) to drive in-window traction.
+- **Arc testnet settlement confirmed:** `examples/arc-live` (`buyer.ts` + `seller.ts`) produces real sub-cent USDC settlements on Arc via `GatewayClient.pay()`. The `deposit.ts` helper loads Gateway balance in one step. The returned `transaction` hash flows into `receipt.chainReference` in the main API. `PAYMENT_MODE` auto-activates `arc_testnet` when `AGENT_PRIVATE_KEY` + `PLATFORM_WALLET_ADDRESS` are present — no `CIRCLE_API_KEY` required.
+- **Wallet connection wired:** MetaMask uses `window.ethereum.request({ method: 'eth_requestAccounts' })` directly. WalletConnect uses Reown AppKit (CDN) — set `WC_PROJECT_ID` in `public/index.html` to enable. Managed wallet provisions a Circle Wallet stub via `POST /auth/wallet`.
+- **Persistence:** in-memory store snapshots to JSON on every settled run; Prisma/Postgres schema is complete and swap-ready (`PERSIST_BACKEND=postgres`).
 
 ## Docs
 

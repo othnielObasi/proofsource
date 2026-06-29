@@ -109,5 +109,45 @@
 <script type="text/babel" src="./creator.jsx"></script>
 <script type="text/babel" src="./traction.jsx"></script>
 <script type="text/babel" src="./app.jsx"></script>
+
+<!-- WalletConnect / Reown AppKit — set WC_PROJECT_ID to enable.
+     Get a free project ID at https://cloud.reown.com (60 seconds).
+     Leave empty to gracefully disable WalletConnect. -->
+<script type="module">
+(async () => {
+  const WC_PROJECT_ID = '';
+  if (!WC_PROJECT_ID) return;
+  try {
+    const [{ createAppKit }, { EthersAdapter }] = await Promise.all([
+      import('https://cdn.jsdelivr.net/npm/@reown/appkit@1.6.8/dist/cdn/index.js'),
+      import('https://cdn.jsdelivr.net/npm/@reown/appkit-adapter-ethers@1.6.8/dist/cdn/index.js'),
+    ]);
+    const arcTestnet = {
+      id: 5042002, caipNetworkId: 'eip155:5042002', chainNamespace: 'eip155',
+      name: 'Arc Testnet',
+      nativeCurrency: { name: 'Arc', symbol: 'ARC', decimals: 18 },
+      rpcUrls: { default: { http: ['https://rpc.testnet.arc.network'] } },
+      blockExplorers: { default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' } },
+    };
+    const modal = createAppKit({
+      adapters: [new EthersAdapter()],
+      networks: [arcTestnet],
+      projectId: WC_PROJECT_ID,
+      metadata: { name: 'ProofSource', description: 'AI citation settlement', url: location.origin, icons: [] },
+      themeMode: 'dark',
+    });
+    window.__WC_MODAL__ = modal;
+    modal.subscribeAccount(({ isConnected, address }) => {
+      if (isConnected && address && window.__WC_RESOLVE__) {
+        const fn = window.__WC_RESOLVE__;
+        window.__WC_RESOLVE__ = null;
+        fn(address);
+      }
+    });
+  } catch (e) {
+    console.warn('[ProofSource] WalletConnect init failed:', e.message);
+  }
+})();
+</script>
 </body>
 </html>

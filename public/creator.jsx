@@ -9,6 +9,7 @@ function AppCreator({ go }) {
   const [listed, setListed] = useState(null); // null | number (count)
   const [showWallet, setShowWallet] = useState(false);
   const [connecting, setConnecting] = useState(null);
+  const [walletErr, setWalletErr] = useState('');
   const [earningsData, setEarningsData] = useState(null); // real API data
   const [loadingEarnings, setLoadingEarnings] = useState(false);
 
@@ -59,19 +60,47 @@ function AppCreator({ go }) {
 
   async function connectWallet(type) {
     setConnecting(type);
+    setWalletErr('');
     try {
+      let addr, kind;
       if (type === 'managed') {
         const data = await window.PS_API.wallet({ kind: 'managed' });
-        window.Store.connectWallet(data.walletAddress, 'managed');
-      } else {
-        // MetaMask / WalletConnect: simulate for prototype; production uses wagmi
-        await new Promise((r) => setTimeout(r, 1400));
-        const addr = '0x' + window.Store._hash(40);
-        await window.PS_API.wallet({ walletAddress: addr, kind: 'connected' }).catch(() => {});
-        window.Store.connectWallet(addr, type);
+        addr = data.walletAddress; kind = 'managed';
+      } else if (type === 'metamask') {
+        if (!window.ethereum) throw new Error('MetaMask is not installed. Visit metamask.io to add the browser extension, then try again.');
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (!accounts || !accounts[0]) throw new Error('MetaMask returned no accounts.');
+        addr = accounts[0]; kind = 'connected';
+        await window.PS_API.wallet({ walletAddress: addr, kind }).catch(() => {});
+      } else if (type === 'walletconnect') {
+        if (!window.__WC_MODAL__) throw new Error('WalletConnect needs a project ID. Set WC_PROJECT_ID in index.html — get one free at cloud.reown.com.');
+        addr = await new Promise((resolve, reject) => {
+          let settled = false;
+          const timeout = setTimeout(() => {
+            if (settled) return; settled = true;
+            window.__WC_RESOLVE__ = null;
+            reject(new Error('Connection timed out.'));
+          }, 120000);
+          window.__WC_RESOLVE__ = (a) => {
+            if (settled) return; settled = true;
+            clearTimeout(timeout);
+            resolve(a);
+          };
+          window.__WC_MODAL__.open();
+        });
+        kind = 'connected';
+        await window.PS_API.wallet({ walletAddress: addr, kind }).catch(() => {});
       }
-    } catch {}
-    setConnecting(null); setShowWallet(false);
+      window.Store.connectWallet(addr, kind);
+      setShowWallet(false);
+    } catch (e) {
+      if (e.code === 4001) {
+        setWalletErr('Connection rejected. Approve the request in your wallet to continue.');
+      } else {
+        setWalletErr(e.message || 'Connection failed.');
+      }
+    }
+    setConnecting(null);
   }
 
   async function submitFeed(e) {
@@ -143,7 +172,7 @@ function AppCreator({ go }) {
               <div style={{ fontSize: 13, color: 'var(--text)' }}>No wallet connected</div>
               <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 2 }}>Your earnings are accumulating and will be released when you connect.</div>
             </div>
-            <Btn variant="primary" size="sm" onClick={() => setShowWallet(true)}>Connect wallet</Btn>
+            <Btn variant="primary" size="sm" onClick={() => { setWalletErr(''); setShowWallet(true); }}>Connect wallet</Btn>
           </div>
         )}
       </div>
@@ -235,26 +264,36 @@ function AppCreator({ go }) {
       {/* ── Wallet selector overlay ──────────────────────────── */}
       {showWallet && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.76)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'grid', placeItems: 'center', padding: 24 }}
-          onClick={(e) => { if (e.target === e.currentTarget && !connecting) setShowWallet(false); }}>
+          onClick={(e) => { if (e.target === e.currentTarget && !connecting) { setShowWallet(false); setWalletErr(''); } }}>
           <div style={{ background: '#0E1420', border: '1px solid var(--line)', borderRadius: 16, padding: 28, width: 'min(400px,100%)', boxShadow: 'var(--shadow)' }}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Connect a wallet</div>
             <div style={{ fontSize: 13, color: 'var(--mut)', marginBottom: 22 }}>Choose how you want to receive your USDC earnings on Arc.</div>
             <div style={{ display: 'grid', gap: 10 }}>
               {WALLETS.map((w) => (
                 <div key={w.id} onClick={() => !connecting && connectWallet(w.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: connecting === w.id ? 'rgba(84,180,136,.08)' : 'var(--panel2)', border: '1px solid ' + (connecting === w.id ? 'var(--earned-line)' : 'var(--line)'), borderRadius: 10, cursor: connecting ? 'default' : 'pointer', transition: 'border-color .15s, background .15s' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: connecting === w.id ? 'rgba(84,180,136,.08)' : 'var(--panel2)', border: '1px solid ' + (connecting === w.id ? 'var(--earned-line)' : 'var(--line)'), borderRadius: 10, cursor: connecting ? 'default' : 'pointer', transition: 'border-color .15s, background .15s', opacity: (connecting && connecting !== w.id) ? 0.4 : 1 }}>
                   <span style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(255,255,255,.04)', border: '1px solid var(--line)', display: 'grid', placeItems: 'center', color: 'var(--mut)', fontSize: 14, flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
                     {w.id === 'metamask' ? '🦊' : w.id === 'walletconnect' ? '⬡' : '◈'}
                   </span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: connecting === w.id ? 'var(--earned)' : 'var(--text)' }}>{w.label}</div>
-                    <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 2 }}>{connecting === w.id ? 'Connecting…' : w.sub}</div>
+                    <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 2 }}>
+                      {connecting === w.id ? 'Connecting…'
+                        : w.id === 'metamask' ? (window.ethereum ? 'Browser extension · detected' : 'Browser extension · metamask.io')
+                        : w.id === 'walletconnect' ? (window.__WC_MODAL__ ? 'Mobile or desktop via QR code' : 'Needs WC_PROJECT_ID in index.html')
+                        : w.sub}
+                    </div>
                   </div>
                   {connecting !== w.id && <span style={{ color: 'var(--faint)', fontSize: 16 }}>›</span>}
                 </div>
               ))}
             </div>
-            <button onClick={() => !connecting && setShowWallet(false)} style={{ marginTop: 18, background: 'none', border: 'none', color: 'var(--faint)', fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'center' }}>Cancel</button>
+            {walletErr && (
+              <div style={{ marginTop: 14, padding: '10px 13px', background: 'rgba(220,60,40,.08)', border: '1px solid rgba(220,60,40,.25)', borderRadius: 9, color: '#f4a09a', fontSize: 12, lineHeight: 1.5 }}>
+                {walletErr}
+              </div>
+            )}
+            <button onClick={() => { if (!connecting) { setShowWallet(false); setWalletErr(''); } }} style={{ marginTop: 18, background: 'none', border: 'none', color: 'var(--faint)', fontSize: 13, cursor: connecting ? 'default' : 'pointer', width: '100%', textAlign: 'center' }}>Cancel</button>
           </div>
         </div>
       )}
