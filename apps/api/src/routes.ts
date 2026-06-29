@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Provider, Resource, OperatorMandate } from "../../../packages/shared/src/types.js";
+import { ARC_USDC, ARC_GATEWAY_CONTRACT } from "./env.js";
 
 let sampleXml = "<rss version=\"2.0\"><channel><title>Sample</title><item><title>Per-use licensing</title><link>https://example.com/1</link><description>Sample content</description></item></channel></rss>";
 try {
@@ -281,5 +282,51 @@ export async function registerRoutes(app: FastifyInstance) {
       }, 0);
       return { provider: p.name, sales: receipts.length, earningsUsdc: earnings.toFixed(6) };
     });
+  });
+
+  // ── x402 seller endpoint — serves resource content behind Circle Gateway nanopayment.
+  // In arc_testnet mode the research agent calls this URL via GatewayClient.pay().
+  // In mock mode it returns content directly (no payment required).
+  app.get<{ Params: { resourceId: string } }>("/research/:resourceId", async (req, reply) => {
+    const resource = store.resources.get(req.params.resourceId) ?? store.listResources()[0];
+    if (!resource) return reply.code(404).send({ error: "no resources seeded yet" });
+
+    const provider = store.providers.get(resource.providerId);
+    const payTo = provider?.walletAddress ?? env.platformWallet ?? "0x0000000000000000000000000000000000000000";
+    const amountAtomic = String(Math.round(parseFloat(resource.priceUsdc) * 1_000_000));
+
+    if (env.paymentMode !== "arc_testnet") {
+      return reply.send({ title: resource.title, body: resource.contentBody });
+    }
+
+    const encode = (v: unknown) => Buffer.from(JSON.stringify(v)).toString("base64url");
+    const decode = (s: string) => JSON.parse(Buffer.from(s, "base64url").toString("utf8"));
+
+    const PAYMENT_REQUIREMENTS = {
+      scheme: "exact", network: env.arcX402Network,
+      asset: ARC_USDC, amount: amountAtomic, payTo,
+      maxTimeoutSeconds: 60,
+      extra: { name: "GatewayWalletBatched", version: "1", verifyingContract: ARC_GATEWAY_CONTRACT },
+    };
+
+    const sigHeader = (req.headers["payment-signature"] ?? req.headers["x-payment"]) as string | undefined;
+    if (!sigHeader) {
+      const resourceUrl = `${env.sellerBaseUrl}/research/${resource.id}`;
+      const paymentRequired = { x402Version: 2, resource: { url: resourceUrl, description: resource.title, mimeType: "application/json" }, accepts: [PAYMENT_REQUIREMENTS] };
+      return reply.code(402).header("PAYMENT-REQUIRED", encode(paymentRequired)).send(paymentRequired);
+    }
+
+    try {
+      const { BatchFacilitatorClient }: any = await import("@circle-fin/x402-batching/server");
+      const facilitator = new BatchFacilitatorClient({ url: env.circleGatewayUrl });
+      const paymentPayload = decode(sigHeader);
+      const verification = await facilitator.verify(paymentPayload, PAYMENT_REQUIREMENTS);
+      if (!verification.isValid) return reply.code(402).send({ error: "Payment invalid: " + verification.invalidReason });
+      const settlement = await facilitator.settle(paymentPayload, PAYMENT_REQUIREMENTS);
+      if (!settlement.success) return reply.code(402).send({ error: "Settlement failed: " + settlement.errorReason });
+      return reply.send({ title: resource.title, body: resource.contentBody });
+    } catch (err: any) {
+      return reply.code(402).send({ error: "Payment error: " + (err?.message ?? String(err)) });
+    }
   });
 }

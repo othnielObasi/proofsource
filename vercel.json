@@ -1,10 +1,15 @@
 {
   "rewrites": [
-    { "source": "/v1/:path*", "destination": "/api/index" },
-    { "source": "/demo/:path*", "destination": "/api/index" }
+    { "source": "/v1/:path*",       "destination": "/api/index" },
+    { "source": "/demo/:path*",     "destination": "/api/index" },
+    { "source": "/research/:path*", "destination": "/api/index" }
   ],
   "env": {
-    "PAYMENT_MODE": "mock",
-    "PERSIST_DISABLED": "true"
+    "PAYMENT_MODE":        "arc_testnet",
+    "SELLER_BASE_URL":     "https://proofsource-mu.vercel.app",
+    "CIRCLE_GATEWAY_URL":  "https://gateway-api-testnet.circle.com",
+    "ARC_TESTNET_RPC_URL": "https://rpc.testnet.arc.network",
+    "ARC_TESTNET_CHAIN_ID":"5042002",
+    "ARC_X402_NETWORK":    "eip155:5042002"
   }
 }
