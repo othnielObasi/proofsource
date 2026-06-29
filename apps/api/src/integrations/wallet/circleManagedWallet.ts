@@ -5,6 +5,7 @@
  * Requires: CIRCLE_API_KEY + CIRCLE_ENTITY_SECRET in env.
  * Generate entity secret: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
  */
+import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
 import { env } from "../../env.js";
 
 const WALLET_SET_NAME = "ProofSource Creators";
@@ -13,12 +14,11 @@ const BLOCKCHAIN     = "ARC-TESTNET";
 let _client: any = null;
 let _walletSetId: string | null = null;
 
-async function getClient() {
+function getClient() {
   if (_client) return _client;
   if (!env.circleApiKey || !env.circleEntitySecret) {
     throw new Error("CIRCLE_API_KEY and CIRCLE_ENTITY_SECRET are required for managed wallets.");
   }
-  const { initiateDeveloperControlledWalletsClient } = await import("@circle-fin/developer-controlled-wallets");
   _client = initiateDeveloperControlledWalletsClient({
     apiKey: env.circleApiKey,
     entitySecret: env.circleEntitySecret,
@@ -28,7 +28,7 @@ async function getClient() {
 
 async function getOrCreateWalletSet(): Promise<string> {
   if (_walletSetId) return _walletSetId;
-  const client = await getClient();
+  const client = getClient();
   const list = await client.listWalletSets();
   const existing = list.data?.walletSets?.find((ws: any) => ws.name === WALLET_SET_NAME);
   if (existing) { _walletSetId = existing.id; return existing.id; }
@@ -39,7 +39,7 @@ async function getOrCreateWalletSet(): Promise<string> {
 }
 
 export async function provisionManagedWallet(creatorName: string): Promise<{ walletId: string; walletAddress: string }> {
-  const client    = await getClient();
+  const client    = getClient();
   const walletSetId = await getOrCreateWalletSet();
   const res = await client.createWallets({
     accountType: "SCA",
@@ -54,7 +54,7 @@ export async function provisionManagedWallet(creatorName: string): Promise<{ wal
 }
 
 export async function getWalletBalance(walletId: string): Promise<{ usdc: string; walletId: string }> {
-  const client = await getClient();
+  const client = getClient();
   const res = await client.getWalletTokenBalance({ id: walletId });
   const balances = res.data?.tokenBalances ?? [];
   const usdc = balances.find((b: any) => b.token?.symbol === "USDC")?.amount ?? "0.000000";
@@ -62,7 +62,7 @@ export async function getWalletBalance(walletId: string): Promise<{ usdc: string
 }
 
 export async function transferToExternal(walletId: string, destinationAddress: string, amountUsdc: string): Promise<{ txId: string }> {
-  const client = await getClient();
+  const client = getClient();
   const res = await client.createTransaction({
     walletId,
     tokenId: "USDC",
