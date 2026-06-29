@@ -4,9 +4,12 @@
 // hard-depends on it). Saves are debounced and off the request hot path.
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { toSnapshot, loadSnapshot, isEmptySnapshot, type Snapshot } from "./snapshot.js";
+
+const require = createRequire(import.meta.url);
 
 interface Backend {
   name: string;
@@ -37,7 +40,7 @@ class PostgresBackend implements Backend {
   private pool: any;
   private async client() {
     if (this.pool) return this.pool;
-    const pg: any = await import("pg" + "");
+    const pg: any = require("pg");
     this.pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
     await this.pool.query(
       `CREATE TABLE IF NOT EXISTS proofsource_snapshot (

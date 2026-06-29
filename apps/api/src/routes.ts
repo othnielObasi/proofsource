@@ -33,7 +33,7 @@ export async function registerRoutes(app: FastifyInstance) {
     "/v1/proofsource/auth/register", async (req, reply) => {
       const r = auth.register(req.body ?? ({} as any));
       if ("error" in r) return reply.code(400).send(r);
-      persistence.scheduleSave();
+      await persistence.saveNow();
       return r;
     });
   app.post<{ Body: { email: string; password: string } }>(
@@ -82,7 +82,7 @@ export async function registerRoutes(app: FastifyInstance) {
         }
       }
 
-      persistence.scheduleSave();
+      await persistence.saveNow();
       return { ...r, walletAddress: resolvedAddress, managed: kind === "managed", circleWalletId };
     });
 
@@ -130,11 +130,11 @@ export async function registerRoutes(app: FastifyInstance) {
         if (sample || !url) {
           const xml = sampleXml;
           const r = ingestFromString(xml, { priceUsdc, maxItems, sourceLabel: "sample-feed.xml" });
-          persistence.scheduleSave();
+          await persistence.saveNow();
           return r;
         }
         const r = await ingestFromUrl(url, { priceUsdc, maxItems });
-        persistence.scheduleSave();
+        await persistence.saveNow();
         return r;
       } catch (e) {
         return { error: (e as Error).message };
@@ -191,7 +191,7 @@ export async function registerRoutes(app: FastifyInstance) {
       } catch (e) {
         return { error: "registered, but feed import failed: " + (e as Error).message, providerId: id };
       }
-      persistence.scheduleSave();
+      await persistence.saveNow();
       return {
         providerId: id, name: provider.name, walletAddress, managed: !b.walletAddress,
         listed, dashboardUrl: `/creator.html?id=${id}`,
@@ -215,7 +215,7 @@ export async function registerRoutes(app: FastifyInstance) {
         } else {
           return reply.code(400).send({ error: "provide a feedUrl or set sample=true" });
         }
-        persistence.scheduleSave();
+        await persistence.saveNow();
         return { providerId: acct.providerId, listed };
       } catch (e) {
         return reply.code(400).send({ error: (e as Error).message });
@@ -334,7 +334,7 @@ export async function registerRoutes(app: FastifyInstance) {
     "/v1/proofsource/demo/research-agent/run", async (req) => {
       const { workspaceId = "ws_demo", agentId = "agent_research_01", question } = req.body ?? {};
       const result = await runResearchAgent({ workspaceId, agentId, question });
-      persistence.scheduleSave(); // durably record accrued volume (off hot path)
+      await persistence.saveNow(); // durably record accrued volume (off hot path)
       return result;
     });
 
