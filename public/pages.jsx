@@ -62,50 +62,52 @@ function Solutions({ go }) {
 
 const CODE = `// Ask your agent. It decides, pays, verifies, cites.
 const res = await fetch(
-  "/v1/proofsource/demo/research-agent/run",
+  "https://proofsource-mu.vercel.app/v1/proofsource/agent/run",
   {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "x-proofsource-key": "ps_live_...",  // operator API key
+    },
     body: JSON.stringify({
-      workspaceId,
       question: "AI content licensing arguments?",
     }),
   }
 ).then(r => r.json());
 
 res.decision.action;        // "BUY" | "REUSE" | "SKIP"
-res.spend.totalUsdc;        // 0.002000
-res.sources[0].receiptId;   // tamper-evident proof
+res.spend.totalUsdc;        // "0.002000"
+res.sources[0].receiptId;   // tamper-evident proof on Arc
 res.decision.scores;        // per-source relevance + value/cent`;
 
 function Developers({ go }) {
   const DOORS = [
     {
       label: 'MCP server',
-      sub: 'Claude Code · Cursor · Windsurf',
+      sub: 'Claude · Cursor · Windsurf · Claude Code',
       cmd: 'claude mcp add proofsource -- npx -y @proofsource/mcp',
-      body: 'One line wires ProofSource into any MCP client. Tools: proofsource_ask, proofsource_traction, proofsource_creator_earnings, proofsource_wallet_status.',
+      body: 'One line wires ProofSource into any MCP client. Exposes three tools: proofSource_ask (pay + cite), proofSource_decide (preview without spending), proofSource_traction (live metrics). Published: @proofsource/mcp.',
       tone: 'buy',
     },
     {
-      label: 'OpenClaw plugin',
-      sub: '~380k★ self-hosted AI gateway',
-      cmd: 'openclaw plugins install proofsource',
-      body: 'Any OpenClaw assistant can answer with cited sources and pay those creators per citation — installed from ClawHub in one command.',
+      label: 'OpenAI plugin / OpenClaw',
+      sub: 'Claude.ai · GPT Actions · Codex',
+      cmd: 'PROOFSOURCE_API_KEY=ps_live_... npx @proofsource/openclaw-plugin',
+      body: 'Serves /.well-known/ai-plugin.json and proxies POST /ask to the agent. Point Claude.ai or any OpenAI-compatible assistant at it. OpenAPI 3.1 spec at /openapi.json. Published: @proofsource/openclaw-plugin.',
       tone: 'earned',
     },
     {
       label: 'SDK',
-      sub: '@proofsource/sdk',
-      cmd: 'npm i @proofsource/sdk',
-      body: 'The shared typed client every surface sits on. Methods: ask(), decide(), traction(), earnings(), connectFeed(), mandate(). Used by MCP, OpenClaw, and the web app.',
+      sub: '@proofsource/sdk · npm i @proofsource/sdk',
+      cmd: 'const ps = new ProofSource({ baseUrl, apiKey });',
+      body: 'Typed client every integration surface sits on. Methods: ask(), decide(), traction(), earnings(), connectFeed(), mandate(), regenerateApiKey(). Zero dependencies — pure fetch().',
       tone: 'buy',
     },
     {
-      label: 'x402 / Gateway',
-      sub: 'Circle Arc · cross-team loops',
-      cmd: 'PAYMENT_MODE=arc_testnet npm start',
-      body: 'Content served as x402-protected, Gateway-batched endpoints. Other agents pay ProofSource per call; ProofSource pays them. The hackathon cross-team payment loop.',
+      label: 'REST API',
+      sub: 'x-proofsource-key · any language',
+      cmd: 'POST /v1/proofsource/agent/run  x-proofsource-key: ps_live_...',
+      body: 'Machine-to-machine endpoint — no browser session needed. Accepts any HTTP client. Returns decision, answer, sources (with receipt IDs), and spend. OpenAPI spec at /openapi.json.',
       tone: 'skip',
     },
   ];
@@ -143,10 +145,10 @@ function Developers({ go }) {
         {/* steps */}
         <div>
           {[
-            { n: '01', t: 'Ingest real sources', d: 'POST /connectors/rss/ingest with any RSSHub route or RSS/Atom URL — each article becomes a priced, hash-verified resource credited to its real author.' },
-            { n: '02', t: 'Set the mandate', d: 'PUT budget, per-task ceiling, max price, preferred/blocked creators. The agent obeys it strictly.' },
-            { n: '03', t: 'Ask & settle', d: 'POST a question. The agent decides, pays on x402, verifies delivery, releases on Arc, and returns the answer + receipt.' },
-            { n: '04', t: 'Secure the signer key', d: '1Claw (1claw.dev, promo LEPTON26) holds the Arc signer key and hands it to the agent at runtime — never in plaintext .env.' },
+            { n: '01', t: 'Get an API key', d: 'Sign up as an operator at proofsource-mu.vercel.app. Your ps_live_... key is returned on registration and available at GET /auth/me.' },
+            { n: '02', t: 'Ingest real sources', d: 'POST /connectors/rss/ingest with any RSSHub route or RSS/Atom URL — each article becomes a priced, hash-verified resource credited to its real author.' },
+            { n: '03', t: 'Set the mandate', d: 'PUT budget, per-task ceiling, max price, preferred/blocked creators. The agent obeys it strictly — it can decline a source, but cannot use one without paying.' },
+            { n: '04', t: 'Ask & settle', d: 'POST /v1/proofsource/agent/run with your API key. The agent decides, pays x402, verifies delivery, releases on Arc, and returns the cited answer + tamper-evident receipts.' },
           ].map((s) => (
             <div key={s.n} style={{ display: 'grid', gridTemplateColumns: '46px 1fr', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--line-soft)' }}>
               <span style={{ width: 38, height: 38, borderRadius: 99, display: 'grid', placeItems: 'center', border: '1px solid var(--earned-line)', color: 'var(--earned2)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{s.n}</span>

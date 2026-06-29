@@ -1,107 +1,166 @@
 # ProofSource
 
-**Creators price their work. Agents pay to use it. The receipt proves they earned it.** Verified-delivery nanopayments for AI-used content, settled on **Arc** in **USDC** via **Circle Gateway**.
+**Creators price their work. Agents pay to use it. The receipt proves they earned it.**
 
-An AI research agent, working under an operator's budget and policy, pays a creator to ground an answer in their content — but the source is only accessible through a sub-cent payment (x402), and that payment only finalizes into a ProofSource receipt once delivery is cryptographically verified. The agent can decline a source; it cannot use one without paying. Every purchase produces a tamper-evident receipt and a reusable paid-context record, so the agent never pays twice for the same knowledge.# ProofSource
+Verified-delivery nanopayments for AI-cited content, settled on **Arc** in **USDC** via **Circle Gateway**.
 
-**Creators price their work. Agents pay to use it. The receipt proves the creator earned it.** Verified-delivery nanopayments for AI-cited content, settled on **Arc** in **USDC** via **Circle Gateway**.
+Live at → **[proofsource-mu.vercel.app](https://proofsource-mu.vercel.app)**
 
-An AI research agent, working under an operator's budget and policy, pays to ground an answer in a creator's content — but the source is only accessible through a sub-cent payment (x402), and that payment only finalizes once delivery is verified, producing a tamper-evident, cryptographically signed ProofSource receipt. The agent can decline a source; it cannot use one without paying. Every purchase also writes a reusable paid-context record, so the agent never pays twice for the same source.
+Built for the **Lepton Agents Hackathon** (Canteen × Circle × Arc). Primary fit: **RFB 6 · Creator & Publisher Monetization**, with **RFB 1 · Autonomous Paying Agents** as the buyer.
 
-Built for the **Lepton Agents Hackathon** (Canteen × Circle × Arc). Primary fit: **RFB 6 · Creator & Publisher Monetization**, with **RFB 1 · Autonomous Paying Agents** as the buyer. Maps directly to the hackathon's **Prior Art #01 — "content that earns every time it is cited."**
+---
 
 ## The problem
 
-AI agents and answer engines have become major consumers of written work, but they read it as free raw material. An agent grounds its answer in an article, a feed, or a report and returns nothing to whoever produced it: the value accrues to the model and the aggregator, while the source — the reporter, the publisher, the researcher — captures none of it.
+AI agents and answer engines have become major consumers of written work, but they read it as free raw material. An agent grounds its answer in an article, a feed, or a report and returns nothing to whoever produced it — the value accrues to the model and the aggregator, while the source captures none of it.
 
-This was never only an attribution gap; it was an economics gap. Until a payment could clear below roughly thirty cents after fees, a single article or citation was never worth selling on its own, so creators were pushed into subscriptions, ads, and bundles. The natural unit — one use, one citation — was too small to price.
+Two developments remove the economics floor. Sub-cent settlement on Arc — USDC as native gas, gasless Gateway batching, sub-second finality — makes a per-citation payment economical for the first time. And verified delivery plus tamper-evident receipts make each payment *provable* — the harder half, and the one the hackathon brief names as the real build.
 
-Two developments remove that floor. Sub-cent settlement on Arc — USDC as native gas, gasless Gateway batching, sub-second finality — makes a per-citation payment economical for the first time. And verified delivery plus tamper-evident receipts make each payment *provable* — the harder half, and the one the hackathon brief names as the real build: not the payment itself, but the layer that detects use and proves it.
-
-ProofSource closes the gap between "AI used my work" and "I was paid for it, and can prove it":
-
-- **Creators are paid per use, not per subscription** — a sub-cent payment each time an agent grounds an answer in their work.
-- **Agents pay only for what they use,** under an operator's budget and policy, and can never use a source without paying — access is gated at the settlement layer.
-- **Every use is provable,** through a cryptographically signed, tamper-evident receipt the creator can see and an auditor can verify.
+ProofSource closes the gap between "AI used my work" and "I was paid for it, and can prove it."
 
 ---
 
 ## Quickstart
 
 ```bash
-# 1. install (npm workspaces)
-cd apps/api && npm install
+git clone https://github.com/othnielObasi/proofsource
+cd proofsource
+npm install
 
-# 2. prove the loop end-to-end (no credentials needed)
-npm run smoke
+# Prove the loop end-to-end (no credentials needed)
+npm run smoke -w @proofsource/api
 
-# 3. run the live console
-npm start          # → http://localhost:3000
+# Start the dev server
+npm run dev -w @proofsource/api    # → http://localhost:3000
 ```
 
-`npm run smoke` runs three scenarios and asserts the outcomes:
+**`npm run smoke` runs three scenarios and asserts the outcomes:**
 
 | Scenario | Decision | Why |
 |---|---|---|
-| New licensing question | **BUY** | Most relevant source clears the value-per-cent bar → authorize → x402 deliver → verify → release → receipt → memory |
-| Similar follow-up question | **REUSE** | Owned paid context covers it → no payment |
-| Off-topic question (sourdough) | **SKIP** | Nothing clears the relevance/value bar → no payment |
-
-The console lets you type a question and watch the decision, the full lifecycle trace, the answer, and the receipt.
+| New licensing question | **BUY** | Best source clears value-per-cent bar → x402 deliver → verify → settle → receipt |
+| Similar follow-up | **REUSE** | Paid context already covers it → no payment |
+| Off-topic (sourdough) | **SKIP** | Nothing clears the relevance floor → no payment |
 
 ---
 
-## What the AI actually decides (rubric: 30% agentic sophistication)
+## npm packages
 
-The framing matters: **creators price their work and set usage terms. The operator sets a standing mandate — budget, per-task ceiling, a max price, preferred/blocked creators, and whether answers must cite a paid source. The agent executes that mandate.** Its only real freedom is choosing which *permitted* source is worth buying for this task, on value-per-cent. It can skip a source — but it can never use one without paying, because access is gated by x402 at the settlement layer.
+All integration surfaces are published to npm under `@proofsource`:
+
+| Package | Install | What it does |
+|---|---|---|
+| [`@proofsource/sdk`](https://npmjs.com/package/@proofsource/sdk) | `npm i @proofsource/sdk` | Typed JS/TS client — `ask()`, `decide()`, `traction()`, `earnings()` |
+| [`@proofsource/mcp`](https://npmjs.com/package/@proofsource/mcp) | `npx -y @proofsource/mcp` | MCP server for Claude Desktop, Cursor, Windsurf |
+| [`@proofsource/openclaw-plugin`](https://npmjs.com/package/@proofsource/openclaw-plugin) | `npx @proofsource/openclaw-plugin` | OpenAI-compatible plugin sidecar |
+
+---
+
+## Integration
+
+### SDK (Node.js / TypeScript)
+
+```ts
+import { ProofSource } from "@proofsource/sdk";
+
+const ps = new ProofSource({
+  baseUrl: "https://proofsource-mu.vercel.app",
+  apiKey: "ps_live_...",   // from your operator account
+});
+
+const result = await ps.ask({
+  question: "What are the key arguments around AI content licensing?",
+});
+
+console.log(result.answer);
+console.log(result.sources);     // who was paid, receipt IDs
+console.log(result.spend);       // { totalUsdc: "0.002000" }
+```
+
+### REST API (any language)
+
+```bash
+curl -X POST https://proofsource-mu.vercel.app/v1/proofsource/agent/run \
+  -H "x-proofsource-key: ps_live_..." \
+  -H "content-type: application/json" \
+  -d '{"question": "What is per-use content licensing?"}'
+```
+
+Response:
+```json
+{
+  "decision": { "action": "BUY", "reasoning": "...", "scores": [...] },
+  "answer": "...",
+  "sources": [{ "providerName": "Ada Powell", "receiptId": "rcpt_..." }],
+  "spend": { "totalUsdc": "0.002000" }
+}
+```
+
+### Claude Desktop / Cursor (MCP)
+
+```json
+{
+  "mcpServers": {
+    "proofsource": {
+      "command": "npx",
+      "args": ["-y", "@proofsource/mcp"],
+      "env": {
+        "PROOFSOURCE_BASE_URL": "https://proofsource-mu.vercel.app",
+        "PROOFSOURCE_API_KEY": "ps_live_...",
+        "PROOFSOURCE_WORKSPACE_ID": "ws_..."
+      }
+    }
+  }
+}
+```
+
+Or via Claude Code CLI:
+```bash
+claude mcp add proofsource -- npx -y @proofsource/mcp
+```
+
+MCP tools exposed: `proofSource_ask`, `proofSource_decide`, `proofSource_traction`
+
+### OpenAI / Codex (GPT Actions)
+
+OpenAPI 3.1 spec: `GET https://proofsource-mu.vercel.app/openapi.json`
+Plugin manifest: `GET https://proofsource-mu.vercel.app/.well-known/ai-plugin.json`
+
+### OpenClaw plugin
+
+```bash
+PROOFSOURCE_API_KEY=ps_live_... npx @proofsource/openclaw-plugin
+```
+
+Serves the plugin manifest + `/ask` proxy on port 3100. Point your OpenClaw or Claude.ai plugin URL at it.
+
+---
+
+## Get an operator API key
+
+1. Sign up at [proofsource-mu.vercel.app](https://proofsource-mu.vercel.app) as an **operator**
+2. Your `ps_live_...` key is returned on registration
+3. Fetch it anytime: `GET /v1/proofsource/auth/me` (JWT auth)
+4. Rotate it: `POST /v1/proofsource/auth/apikey/regenerate` (JWT auth)
+
+---
+
+## How the agent decides (RFB 1 — 30% of judging rubric)
+
+The agent operates under an operator's standing **mandate** — budget, per-task ceiling, max price per source, preferred/blocked creators, and whether answers must cite a paid source. Its only real freedom: choosing which *permitted* source is worth buying on value-per-cent.
 
 For each question the agent:
+- scores every candidate source's **task-relevance** (LLM rerank when `LLM_ENABLED`, deterministic keyword scorer otherwise)
+- discounts by **freshness decay**
+- computes **value-per-cent** = `expectedValue ÷ price-in-cents`
+- drops blocked creators, respects budget/ceiling/maxPrice limits, biases toward preferred creators
+- chooses **REUSE** → **BUY** → **SKIP** in that priority order
 
-- scores every candidate source's **task-relevance** (LLM rerank when `LLM_ENABLED`, deterministic keyword scorer otherwise),
-- discounts by **freshness decay**,
-- computes **expected value-per-cent** = `expectedValue ÷ price-in-cents`,
-- drops creators the operator **blocked** and respects the **max price** and **budget/ceiling** limits,
-- biases toward operator-**preferred** creators,
-- and chooses **REUSE** (free) vs **BUY** (best permitted value-per-cent) vs **SKIP** (nothing permitted clears the bar).
-
-Every candidate gets a **legible verdict** — `bought`, `reused`, `blocked by operator policy`, `skipped: relevance below floor`, etc. — so both the buyer *and the creator* can see exactly why a source was or wasn't paid. See `src/modules/agent/decision.ts`; set the mandate via `PUT /v1/proofsource/mandate`. The decision governs **what/whether** to buy — it never governs whether a payment **releases**. That stays deterministic.
+Every candidate gets a legible verdict — `bought`, `reused`, `blocked by operator policy`, `skipped: relevance below floor` — visible to both buyer and creator.
 
 ## What stays deterministic (settlement integrity)
 
-The LLM is walled off from money. Payment releases only when `verifyDelivery()` passes seven checks (resource match, provider match, payload present, hash generated, non-empty, delivered-before-expiry, usage rights attached). Idempotency keys prevent duplicate settlement. Every state transition writes an audit event. See `src/modules/policy/index.ts` and `src/modules/agent/run.ts`.
-
-## Surfaces (one coherent product)
-
-A single front door (`/`) leads into sign-in / create-account (`/auth.html`) with a creator or operator role, a shared design system (`app.css` + `app.js`), and wallet connection (MetaMask via `window.ethereum`, a managed-wallet option for non-crypto users, or paste). Auth is hackathon-grade (scrypt-hashed passwords, bearer tokens; `POST /auth/register|login`, `GET /auth/me`, `POST /auth/wallet`).
-
-- **Creators (writers, publishers, professors)** sign up, connect their wallet (or get a managed one), connect an RSS/RSSHub feed to list work, and watch earnings at `/creator.html` — total, per-piece, and a feed of recent citations each backed by a verifiable receipt.
-- **Operators (research teams running an agent)** sign up, get a workspace + mandate, and use the console at `/console.html` to ask questions and watch the agent decide, pay, verify, and cite — against real creator content — with the traction dashboard at `/traction.html`.
-- **The agent** is not a screen; it transacts through the API the operator's workspace drives.
-
-The full loop is real and persisted end to end: a creator onboards → an operator's agent cites their work → the creator sees the payment land with proof.
-
-## Real content (rubric: 30% traction)
-
-The agent doesn't only buy seeded demo rows — `src/connectors/rss/` ingests a real **RSS/Atom feed** (e.g. from **RSSHub**, named in the hackathon's Prior Art #01 as the natural host for citation-tolls) and turns each article into a priced, hash-verified resource credited to its real author, with **freshness driven by the real publish date**. `POST /v1/proofsource/connectors/rss/ingest` takes a feed `url` (any RSSHub route or RSS/Atom URL) or `{ "sample": true }` for the bundled fixture. `npm run rss:demo` proves it end-to-end offline: three real articles ingested → agent buys the on-topic one, crediting the real author → reuses it on the follow-up. Point it at live RSSHub routes on deploy to onboard real creators and generate real in-window payments.
-
-## Traction engine + persistence
-
-Traction is the 30% the rubric weights highest, and it has to be *real volume that survives a restart*. Two pieces make that true:
-
-- **Harness (`scripts/harness.ts`, `npm run harness`)** stands up N independent reader-agents — each with its own budget and operator mandate — and runs them through batches of questions against the ingested creator catalog. Every reader pays creators independently, so payouts and payment counts accrue exactly as with real users; reuse appears when a reader revisits a paid topic. In mock mode it proves the funnel offline; with Circle creds (`PAYMENT_MODE=arc_testnet`) the same loop produces real sub-cent Arc settlements. Example: `npm run harness -- --readers 25 --questions 6`.
-- **Persistence (`src/persistence/`)** snapshots the store so accrued volume survives restarts and is countable. Default backend is a JSON file (zero setup); set `PERSIST_BACKEND=postgres` + `DATABASE_URL` to use Postgres instead (lazy `pg`, no hard dependency). The runtime store stays synchronous — no hot-path refactor — and the normalized `prisma/schema.prisma` remains the production target.
-
-Metrics are computed from settled receipts (`src/modules/metrics/traction.ts`) and served at `GET /v1/proofsource/dashboard/traction`, with a live judge-facing page at `/traction.html`: creators earning, total payouts, payment count, average sub-cent size, reader-to-payer conversion, reuse rate, and per-creator earnings — the exact RFB 1 + RFB 6 figures.
-
-## Circle/Arc-first (rubric: 20% Circle tooling)
-
-Payment runs through a `PaymentAdapter` seam (`src/integrations/payments/`). `PAYMENT_MODE` **auto-selects `arc_testnet` when Circle credentials are present**, falling back to `mock` only for CI/offline — the inverse of a mock-first design. The real settlement path is wired against the **published Circle SDK** (verified Jun 2026):
-
-- buyer (`gateway.ts` / `CircleArcAdapter`): `@circle-fin/x402-batching` `BatchEvmScheme` + `@x402/core` `x402HTTPClient` sign an EIP-3009 authorization via `viem` and settle gas-free through Gateway on Arc;
-- seller (creator endpoint): `@x402/express` `paymentMiddleware` + `BatchFacilitatorClient({ url })` → Circle Gateway `verify`/`settle`;
-- `settle()` returns the on-chain `transaction`, recorded on `receipt.chainReference`.
-
-**A standalone, runnable proof lives in `examples/arc-live/`** — a creator seller + paying agent buyer you can point at Arc testnet to produce one real sub-cent settlement (the day-3 gate in `docs/PLAN.md`). Both it and the core API typecheck clean against the real packages.
+The LLM is walled off from money. Payment releases only when `verifyDelivery()` passes seven checks: resource match, provider match, payload present, hash generated, non-empty, delivered-before-expiry, usage rights attached. Idempotency keys prevent duplicate settlement. Every state transition writes an audit event.
 
 ---
 
@@ -118,151 +177,84 @@ question
           → receipt (tamper-evident) → paid-context memory → answer (cites source)
 ```
 
-| Layer | File |
+| Layer | Path |
 |---|---|
-| Agent decision | `src/modules/agent/decision.ts` |
-| Orchestrator | `src/modules/agent/run.ts` |
-| Policy / verification / receipt | `src/modules/policy/index.ts` |
-| x402 handshake | `src/lib/x402.ts` |
-| Payment adapter (mock + Circle/Arc) | `src/integrations/payments/` |
-| LLM (relevance + answer, optional) | `src/integrations/llm/index.ts` |
-| HTTP API + console | `src/routes.ts`, `src/server.ts`, `public/index.html` |
-| Shared contracts | `packages/shared/src/types.ts` |
-| Production schema | `apps/api/prisma/schema.prisma` |
-
-## Honest status
-
-- **Runs today, zero credentials:** full loop, reuse, skip, operator mandate, per-source verdicts, idempotency, audit, dashboards, console, the RSS/RSSHub connector, the traction harness, durable persistence, **and the creator self-serve experience (onboarding + earnings)** — proven by `npm run smoke`, `npm run rss:demo`, and `npm run harness`, with `npm run typecheck` clean.
-- **Wired against the real SDK, pending live creds:** Gateway settlement in `gateway.ts`/`CircleArcAdapter` and the `examples/arc-live` seller+buyer compile against the published Circle packages; they need a funded Arc-testnet wallet (USDC deposited into Gateway) to produce live settlements. Persistence swap from in-memory store to Prisma/Postgres is schema-complete (store mirrors it 1:1).
-- **Confirm-at-integration (noted in `examples/arc-live/README.md`):** the buyer signer adapter for `BatchEvmScheme` and exact testnet Gateway base URL / Arc chain id.
-- **Next (see `docs/PLAN.md`):** first real testnet settlement (day 3) + a real source connector (RSSHub/Ghost) to drive in-window traction.
-
-## Docs
-
-- `docs/BRD.md` — product requirements (revised for Lepton)
-- `docs/TRD.md` — technical requirements (Circle/x402-first)
-- `docs/PLAN.md` — 14-day build plan mapped to the judging rubric
-- `docs/DEMO_SCRIPT.md` — sub-3-minute video walkthrough
-
-
-Built for the **Lepton Agents Hackathon** (Canteen × Circle × Arc). Primary fit: **RFB 6 · Creator & Publisher Monetization**, with **RFB 1 · Autonomous Paying Agents** as the buyer. Maps directly to the hackathon's **Prior Art #01 — "content that earns every time it is cited."**
+| Agent decision | `apps/api/src/modules/agent/decision.ts` |
+| Orchestrator | `apps/api/src/modules/agent/run.ts` |
+| Policy / verification / receipt | `apps/api/src/modules/policy/index.ts` |
+| x402 handshake | `apps/api/src/lib/x402.ts` |
+| Circle/Arc payment adapter | `apps/api/src/integrations/payments/` |
+| Circle managed wallets | `apps/api/src/integrations/wallet/circleManagedWallet.ts` |
+| RSS/RSSHub connector | `apps/api/src/connectors/rss/` |
+| HTTP API | `apps/api/src/routes.ts` |
+| SDK | `packages/sdk/src/index.ts` |
+| MCP server | `packages/mcp/src/index.ts` |
+| OpenClaw plugin | `packages/openclaw-plugin/src/index.js` |
+| Shared types | `packages/shared/src/types.ts` |
 
 ---
 
-## Quickstart
+## Circle / Arc integration (RFB — 20% of judging rubric)
 
-```bash
-# 1. install (npm workspaces)
-cd apps/api && npm install
+Payment runs through a `PaymentAdapter` seam. `PAYMENT_MODE` auto-selects `arc_testnet` when Circle credentials are present, falling back to `mock` for CI/offline.
 
-# 2. prove the loop end-to-end (no credentials needed)
-npm run smoke
+- **Settlement:** `GatewayClient.pay(resourceUrl)` handles the full x402 handshake — 402 challenge → EIP-3009 signed payment → 200 content — gas-free through Circle Gateway on Arc
+- **Managed wallets:** `@circle-fin/developer-controlled-wallets` provisions real Circle wallets for creators who don't have MetaMask; USDC settlements land directly; creators withdraw via API
+- **Chain:** Arc testnet (chain ID `5042002`, `eip155:5042002`), USDC at `0x360...`
+- **Receipts:** `receipt.chainReference.transactionHash` + live [ArcScan](https://arcscan.app) explorer link
 
-# 3. run the live console
-npm start          # → http://localhost:3000
+A standalone runnable proof lives in `examples/arc-live/` — a creator seller + paying agent buyer that produces one real sub-cent settlement on Arc testnet.
+
+---
+
+## Traction engine (RFB 6 — 30% of judging rubric)
+
+- **Harness** (`scripts/harness.ts`, `npm run harness`): N independent reader-agents each with their own budget, running batches of questions. Example: `npm run harness -- --readers 25 --questions 6`. In `arc_testnet` mode this produces real on-chain settlements.
+- **RSS connector:** `POST /v1/proofsource/connectors/rss/ingest` ingests any RSSHub route or RSS/Atom URL into priced, hash-verified resources credited to real authors with freshness from the real publish date.
+- **Persistence:** Neon Postgres (`PERSIST_BACKEND=postgres` + `DATABASE_URL`) snapshots the full store on every settled run, surviving Vercel cold starts. `await persistence.saveNow()` on every write — no debounce timer that would silently drop in serverless.
+- **Auth:** HMAC-SHA256 stateless JWTs (30-day TTL) — survive cold starts without a shared session store.
+- **Metrics dashboard:** `GET /v1/proofsource/dashboard/traction` → live page at `/traction` — creators earning, total payouts, payment count, avg sub-cent size, reuse rate, per-creator breakdown.
+
+---
+
+## Repo structure
+
+```
+apps/
+  api/         Fastify backend (Vercel serverless)
+  mcp/         → now in packages/mcp
+  openclaw-plugin/ → now in packages/openclaw-plugin
+examples/
+  arc-live/    Standalone Arc testnet settlement proof (buyer + seller)
+packages/
+  sdk/         @proofsource/sdk — typed API client
+  mcp/         @proofsource/mcp — MCP server
+  openclaw-plugin/  @proofsource/openclaw-plugin — OpenAI plugin sidecar
+  shared/      Shared TypeScript types
+public/        Frontend (React JSX, no bundler)
+scripts/       Harness, smoke tests, RSS demo
 ```
 
-`npm run smoke` runs three scenarios and asserts the outcomes:
+---
 
-| Scenario | Decision | Why |
+## Environment variables
+
+| Variable | Required | Description |
 |---|---|---|
-| New licensing question | **BUY** | Most relevant source clears the value-per-cent bar → authorize → x402 deliver → verify → release → receipt → memory |
-| Similar follow-up question | **REUSE** | Owned paid context covers it → no payment |
-| Off-topic question (sourdough) | **SKIP** | Nothing clears the relevance/value bar → no payment |
-
-The console lets you type a question and watch the decision, the full lifecycle trace, the answer, and the receipt.
-
----
-
-## What the AI actually decides (rubric: 30% agentic sophistication)
-
-The framing matters: **creators price their work and set usage terms. The operator sets a standing mandate — budget, per-task ceiling, a max price, preferred/blocked creators, and whether answers must cite a paid source. The agent executes that mandate.** Its only real freedom is choosing which *permitted* source is worth buying for this task, on value-per-cent. It can skip a source — but it can never use one without paying, because access is gated by x402 at the settlement layer.
-
-For each question the agent:
-
-- scores every candidate source's **task-relevance** (LLM rerank when `LLM_ENABLED`, deterministic keyword scorer otherwise),
-- discounts by **freshness decay**,
-- computes **expected value-per-cent** = `expectedValue ÷ price-in-cents`,
-- drops creators the operator **blocked** and respects the **max price** and **budget/ceiling** limits,
-- biases toward operator-**preferred** creators,
-- and chooses **REUSE** (free) vs **BUY** (best permitted value-per-cent) vs **SKIP** (nothing permitted clears the bar).
-
-Every candidate gets a **legible verdict** — `bought`, `reused`, `blocked by operator policy`, `skipped: relevance below floor`, etc. — so both the buyer *and the creator* can see exactly why a source was or wasn't paid. See `src/modules/agent/decision.ts`; set the mandate via `PUT /v1/proofsource/mandate`. The decision governs **what/whether** to buy — it never governs whether a payment **releases**. That stays deterministic.
-
-## What stays deterministic (settlement integrity)
-
-The LLM is walled off from money. Payment releases only when `verifyDelivery()` passes seven checks (resource match, provider match, payload present, hash generated, non-empty, delivered-before-expiry, usage rights attached). Idempotency keys prevent duplicate settlement. Every state transition writes an audit event. See `src/modules/policy/index.ts` and `src/modules/agent/run.ts`.
-
-## Surfaces (one coherent product)
-
-A single front door (`/`) leads into sign-in / create-account (`/auth.html`) with a creator or operator role, a shared design system (`app.css` + `app.js`), and wallet connection (MetaMask via `window.ethereum`, a managed-wallet option for non-crypto users, or paste). Auth is hackathon-grade (scrypt-hashed passwords, bearer tokens; `POST /auth/register|login`, `GET /auth/me`, `POST /auth/wallet`).
-
-- **Creators (writers, publishers, professors)** sign up, connect their wallet (or get a managed one), connect an RSS/RSSHub feed to list work, and watch earnings at `/creator.html` — total, per-piece, and a feed of recent citations each backed by a verifiable receipt.
-- **Operators (research teams running an agent)** sign up, get a workspace + mandate, and use the console at `/console.html` to ask questions and watch the agent decide, pay, verify, and cite — against real creator content — with the traction dashboard at `/traction.html`.
-- **The agent** is not a screen; it transacts through the API the operator's workspace drives.
-
-The full loop is real and persisted end to end: a creator onboards → an operator's agent cites their work → the creator sees the payment land with proof.
-
-## Real content (rubric: 30% traction)
-
-The agent doesn't only buy seeded demo rows — `src/connectors/rss/` ingests a real **RSS/Atom feed** (e.g. from **RSSHub**, named in the hackathon's Prior Art #01 as the natural host for citation-tolls) and turns each article into a priced, hash-verified resource credited to its real author, with **freshness driven by the real publish date**. `POST /v1/proofsource/connectors/rss/ingest` takes a feed `url` (any RSSHub route or RSS/Atom URL) or `{ "sample": true }` for the bundled fixture. `npm run rss:demo` proves it end-to-end offline: three real articles ingested → agent buys the on-topic one, crediting the real author → reuses it on the follow-up. Point it at live RSSHub routes on deploy to onboard real creators and generate real in-window payments.
-
-## Traction engine + persistence
-
-Traction is the 30% the rubric weights highest, and it has to be *real volume that survives a restart*. Two pieces make that true:
-
-- **Harness (`scripts/harness.ts`, `npm run harness`)** stands up N independent reader-agents — each with its own budget and operator mandate — and runs them through batches of questions against the ingested creator catalog. Every reader pays creators independently, so payouts and payment counts accrue exactly as with real users; reuse appears when a reader revisits a paid topic. In mock mode it proves the funnel offline; with Circle creds (`PAYMENT_MODE=arc_testnet`) the same loop produces real sub-cent Arc settlements. Example: `npm run harness -- --readers 25 --questions 6`.
-- **Persistence (`src/persistence/`)** snapshots the store so accrued volume survives restarts and is countable. Default backend is a JSON file (zero setup); set `PERSIST_BACKEND=postgres` + `DATABASE_URL` to use Postgres instead (lazy `pg`, no hard dependency). The runtime store stays synchronous — no hot-path refactor — and the normalized `prisma/schema.prisma` remains the production target.
-
-Metrics are computed from settled receipts (`src/modules/metrics/traction.ts`) and served at `GET /v1/proofsource/dashboard/traction`, with a live judge-facing page at `/traction.html`: creators earning, total payouts, payment count, average sub-cent size, reader-to-payer conversion, reuse rate, and per-creator earnings — the exact RFB 1 + RFB 6 figures.
-
-## Circle/Arc-first (rubric: 20% Circle tooling)
-
-Payment runs through a `PaymentAdapter` seam (`src/integrations/payments/`). `PAYMENT_MODE` **auto-selects `arc_testnet` when Circle credentials are present**, falling back to `mock` only for CI/offline — the inverse of a mock-first design. The real settlement path is wired against the **published Circle SDK** (verified Jun 2026):
-
-- buyer (`gateway.ts` / `CircleArcAdapter`): `@circle-fin/x402-batching` `GatewayClient.pay(resourceUrl)` handles the full x402 handshake — 402 challenge → signed payment → 200 content — gas-free through Circle Gateway on Arc. Returns an on-chain `transaction` recorded on `receipt.chainReference`.
-- seller (creator endpoint): `BatchFacilitatorClient({ url })` → Circle Gateway `verify`/`settle`; manually builds the `PAYMENT-REQUIRED` header (Circle testnet does not yet advertise Arc chain ID in `/supported`, so `x402ResourceServer` is bypassed).
-- `PAYMENT_MODE` auto-selects `arc_testnet` when `AGENT_PRIVATE_KEY` + `PLATFORM_WALLET_ADDRESS` are set. `CIRCLE_API_KEY` is **not required** for `GatewayClient.pay()`.
-
-**A standalone, runnable proof lives in `examples/arc-live/`** — a creator seller + paying agent buyer you can point at Arc testnet to produce one real sub-cent settlement (the day-3 gate in `docs/PLAN.md`). Both it and the core API typecheck clean against the real packages.
+| `JWT_SECRET` | Yes (prod) | Signs HMAC-SHA256 session tokens |
+| `DATABASE_URL` | Yes (prod) | Neon Postgres connection string |
+| `AGENT_PRIVATE_KEY` | Yes (arc_testnet) | Operator wallet private key for Arc settlements |
+| `PLATFORM_WALLET_ADDRESS` | Yes (arc_testnet) | Operator wallet address |
+| `CIRCLE_API_KEY` | Yes (managed wallets) | Circle developer API key |
+| `CIRCLE_ENTITY_SECRET` | Yes (managed wallets) | Circle entity secret (registered in Circle Dashboard) |
+| `PERSIST_BACKEND` | — | `postgres` or `json` (default: json) |
+| `PAYMENT_MODE` | — | `arc_testnet` or `mock` (auto-detected from creds) |
 
 ---
-
-## Architecture
-
-```
-question
-  → discover sources
-  → AGENT DECISION  (relevance · freshness · value-per-cent · budget)   [probabilistic]
-      ├─ REUSE → answer from owned paid context (no payment)
-      ├─ SKIP  → answer without paid source (no payment)
-      └─ BUY ↓                                                          [deterministic]
-          policy gate → authorize → x402 deliver → VERIFY → release
-          → receipt (tamper-evident) → paid-context memory → answer (cites source)
-```
-
-| Layer | File |
-|---|---|
-| Agent decision | `src/modules/agent/decision.ts` |
-| Orchestrator | `src/modules/agent/run.ts` |
-| Policy / verification / receipt | `src/modules/policy/index.ts` |
-| x402 handshake | `src/lib/x402.ts` |
-| Payment adapter (mock + Circle/Arc) | `src/integrations/payments/` |
-| LLM (relevance + answer, optional) | `src/integrations/llm/index.ts` |
-| HTTP API + console | `src/routes.ts`, `src/server.ts`, `public/index.html` |
-| Shared contracts | `packages/shared/src/types.ts` |
-| Production schema | `apps/api/prisma/schema.prisma` |
-
-## Honest status
-
-- **Runs today, zero credentials:** full loop, reuse, skip, operator mandate, per-source verdicts, idempotency, audit, dashboards, console, the RSS/RSSHub connector, the traction harness, durable persistence, **and the creator self-serve experience (onboarding + earnings)** — proven by `npm run smoke`, `npm run rss:demo`, and `npm run harness`, with `npm run typecheck` clean.
-- **Arc testnet settlement confirmed:** `examples/arc-live` (`buyer.ts` + `seller.ts`) produces real sub-cent USDC settlements on Arc via `GatewayClient.pay()`. The `deposit.ts` helper loads Gateway balance in one step. The returned `transaction` hash flows into `receipt.chainReference` in the main API. `PAYMENT_MODE` auto-activates `arc_testnet` when `AGENT_PRIVATE_KEY` + `PLATFORM_WALLET_ADDRESS` are present — no `CIRCLE_API_KEY` required.
-- **Wallet connection wired:** MetaMask uses `window.ethereum.request({ method: 'eth_requestAccounts' })` directly. WalletConnect uses Reown AppKit (CDN) — set `WC_PROJECT_ID` in `public/index.html` to enable. Managed wallet provisions a Circle Wallet stub via `POST /auth/wallet`.
-- **Persistence:** in-memory store snapshots to JSON on every settled run; Prisma/Postgres schema is complete and swap-ready (`PERSIST_BACKEND=postgres`).
 
 ## Docs
 
-- `docs/BRD.md` — product requirements (revised for Lepton)
+- `docs/BRD.md` — product requirements
 - `docs/TRD.md` — technical requirements (Circle/x402-first)
-- `docs/PLAN.md` — 14-day build plan mapped to the judging rubric
+- `docs/PLAN.md` — 14-day build plan mapped to the rubric
 - `docs/DEMO_SCRIPT.md` — sub-3-minute video walkthrough

@@ -101,10 +101,15 @@ window.PS_DATA = (function () {
   ];
 
   const endpoints = [
-    { m: 'POST', p: '/v1/proofsource/demo/research-agent/run',  d: 'Ask a question; get the decision, lifecycle trace, answer, and receipt.' },
+    { m: 'POST', p: '/v1/proofsource/auth/register',            d: 'Create account (creator or operator). Operators receive a ps_live_... API key.' },
+    { m: 'POST', p: '/v1/proofsource/agent/run',                d: 'Run the paying agent. Auth: x-proofsource-key. Returns decision, answer, sources, spend, receipts.' },
+    { m: 'GET',  p: '/v1/proofsource/auth/me',                  d: 'Current account — includes apiKey for operator accounts.' },
+    { m: 'POST', p: '/v1/proofsource/auth/apikey/regenerate',   d: 'Issue a new ps_live_... key for the authenticated operator account.' },
     { m: 'PUT',  p: '/v1/proofsource/mandate',                  d: 'Set budget, per-task ceiling, max price, preferred/blocked creators.' },
-    { m: 'POST', p: '/v1/proofsource/connectors/rss/ingest',    d: 'Ingest an RSS/RSSHub feed into priced, hash-verified resources.' },
-    { m: 'GET',  p: '/v1/proofsource/dashboard/traction',       d: 'Live metrics computed from settled receipts, not seeded.' },
+    { m: 'POST', p: '/v1/proofsource/connectors/rss/ingest',    d: 'Ingest an RSS/RSSHub feed into priced, hash-verified creator resources.' },
+    { m: 'GET',  p: '/v1/proofsource/dashboard/traction',       d: 'Live metrics: creators earning, total payouts, payment count, reuse rate.' },
+    { m: 'GET',  p: '/v1/proofsource/receipts/:id',             d: 'Fetch a settlement receipt — includes Arc chain reference and explorer URL.' },
+    { m: 'GET',  p: '/openapi.json',                            d: 'OpenAPI 3.1 spec — import into Codex, GPT Actions, or Postman.' },
   ];
 
   return { creators, works, topics, settlement, runs, useCases, endpoints };
