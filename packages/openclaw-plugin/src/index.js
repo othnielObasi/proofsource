@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // ProofSource OpenClaw / OpenAI-compatible plugin server.
 // Serves the plugin manifest and OpenAPI spec, and proxies /ask → ProofSource agent/run.
 //

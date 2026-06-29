@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // ProofSource MCP server — exposes the paying research agent as MCP tools so any MCP
 // client (Claude Code/Desktop, Cursor, Windsurf) can use it in one line:
 //

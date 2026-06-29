@@ -1,16 +1,25 @@
 {
   "name": "@proofsource/mcp",
   "version": "0.1.0",
-  "type": "module",
   "description": "ProofSource MCP server — exposes the paying research agent as MCP tools for Claude Desktop, Cursor, Windsurf, and any MCP-compatible client.",
+  "type": "module",
+  "main": "./dist/index.js",
   "bin": {
     "proofsource-mcp": "./dist/index.js"
   },
+  "files": ["dist", "README.md"],
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0"
-  }
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/node": "^20.0.0"
+  },
+  "keywords": ["mcp", "proofsource", "claude", "cursor", "arc", "micropayment"],
+  "license": "MIT"
 }

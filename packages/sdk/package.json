@@ -1,7 +1,24 @@
 {
   "name": "@proofsource/sdk",
   "version": "0.1.0",
+  "description": "Typed JavaScript/TypeScript client for the ProofSource API — pay creators per citation in USDC on Arc.",
   "type": "module",
-  "main": "src/index.ts",
-  "exports": { ".": "./src/index.ts" }
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "keywords": ["proofsource", "arc", "usdc", "micropayment", "content-licensing"],
+  "license": "MIT"
 }
