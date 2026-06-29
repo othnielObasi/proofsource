@@ -1,46 +1,45 @@
-# ProofSource — OpenClaw plugin
+# @proofsource/openclaw-plugin
 
-Let your OpenClaw assistant **pay the sources it cites**. When ProofSource grounds an
-answer in a creator's work, it settles a sub-cent USDC nanopayment to them on Arc, with a
-verifiable receipt — turning your personal assistant into something that compensates the
-writers, publishers, and researchers it relies on.
+OpenAI-compatible plugin server for ProofSource. Serves the plugin manifest, OpenAPI spec, and proxies `/ask` to the ProofSource API — so any GPT Actions or OpenClaw-compatible client can pay sources it cites.
 
-## Install
+## Setup
 
 ```bash
-# from ClawHub (once published)
-openclaw plugins install proofsource
-
-# or from npm / git / a local checkout
-openclaw plugins install @proofsource/openclaw-plugin
-openclaw plugins install proofsource --marketplace <owner/repo>
-openclaw plugins install ./packages/openclaw-plugin     # local dev
+cd packages/openclaw-plugin
+# no extra deps needed — uses Node built-ins
+node src/index.js
 ```
 
-Restart the Gateway after install/config changes.
+## Environment variables
 
-## Configure
-
-Set in the plugin config (or the matching env vars):
-
-| key | env | meaning |
+| Variable | Required | Description |
 |---|---|---|
-| `url` | `PROOFSOURCE_URL` | your ProofSource deployment URL |
-| `token` | `PROOFSOURCE_TOKEN` | operator bearer token (from ProofSource sign-in) |
-| `workspaceId` | `PROOFSOURCE_WORKSPACE` | the operator workspace the agent pays from |
+| `PROOFSOURCE_API_KEY` | Yes | Operator API key (`ps_live_...`) |
+| `PROOFSOURCE_BASE_URL` | No | ProofSource deployment URL (default: `https://proofsource-mu.vercel.app`) |
+| `PLUGIN_URL` | No | Public URL this plugin server is reachable at — used in manifest/spec links (default: `http://localhost:3100`) |
+| `PORT` | No | Port to listen on (default: `3100`) |
 
-## Tools it registers
+## Run
 
-- **`proofsource_ask`** — answer a question using paid sources; the agent decides what's worth buying within your budget/mandate, pays each cited creator in USDC on Arc, and returns the answer with citations + receipts.
-- **`proofsource_traction`** — live metrics: creators earning, total payouts, payment count, sub-cent average, conversion.
-- **`proofsource_creator_earnings`** — a creator's earnings and verified citation receipts.
+```bash
+PROOFSOURCE_API_KEY=ps_live_... PLUGIN_URL=https://your-plugin.example.com node src/index.js
+```
 
-## How it fits
+## Endpoints
 
-This plugin is a thin adapter over `@proofsource/sdk` — the same client the MCP server and
-the web app use. One core engine (agent decision · mandate · x402 deliver · verify ·
-Arc/Gateway settle · receipts), several doors. See `docs/DISTRIBUTION.md`.
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/.well-known/ai-plugin.json` | OpenAI / OpenClaw plugin manifest |
+| `GET` | `/openapi.yaml` | OpenAPI 3.1 spec |
+| `POST` | `/ask` | Proxy to ProofSource `/v1/proofsource/agent/run` |
 
-> The OpenClaw Plugin SDK surface evolves with the gateway version; if `api.registerTool`
-> field names differ on your installed version, align `index.ts` with
-> docs.openclaw.ai/plugins/building-plugins. The tool *logic* is unchanged.
+## Adding to ChatGPT / OpenClaw
+
+1. Run the plugin server with a public URL (e.g. via ngrok or a cloud deployment).
+2. In ChatGPT Plugins or OpenClaw, add a new plugin using the manifest URL:
+   `https://your-plugin-url/.well-known/ai-plugin.json`
+3. Set your `PROOFSOURCE_API_KEY` in the plugin server environment — it will be forwarded to ProofSource.
+
+## OpenClaw plugin (index.ts)
+
+The `index.ts` file at the package root is the OpenClaw native plugin entry (activated via the gateway's `openclaw.plugin.json` extension point). It registers `proofsource_ask`, `proofsource_traction`, and `proofsource_creator_earnings` tools directly into the OpenClaw runtime — no HTTP server needed when running inside the gateway.

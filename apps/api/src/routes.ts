@@ -43,8 +43,14 @@ export async function registerRoutes(app: FastifyInstance) {
       return r;
     });
   app.get("/v1/proofsource/auth/me", async (req, reply) => {
-    const r = auth.me(req.headers.authorization);
+    const r = auth.me(req.headers.authorization, true);
     if ("error" in r) return reply.code(401).send(r);
+    return r;
+  });
+  app.post("/v1/proofsource/auth/apikey/regenerate", async (req, reply) => {
+    const r = auth.regenerateApiKey(req.headers.authorization);
+    if ("error" in r) return reply.code(401).send(r);
+    await persistence.saveNow();
     return r;
   });
   app.post<{ Body: { walletAddress?: string; kind?: "connected" | "managed" } }>(
@@ -84,6 +90,27 @@ export async function registerRoutes(app: FastifyInstance) {
 
       await persistence.saveNow();
       return { ...r, walletAddress: resolvedAddress, managed: kind === "managed", circleWalletId };
+    });
+
+  // ── Operator agent run (API key auth) ────────────────────────────────────
+  app.post<{ Body: { question: string; workspaceId?: string } }>(
+    "/v1/proofsource/agent/run", async (req, reply) => {
+      const rawKey = (req.headers["x-proofsource-key"] as string | undefined)
+        ?? (req.headers.authorization?.replace(/^Bearer\s+/i, ""));
+      if (!rawKey) return reply.code(401).send({ error: "API key required (x-proofsource-key or Authorization: Bearer <key>)" });
+      const acct = auth.findByApiKey(rawKey);
+      if (!acct) return reply.code(401).send({ error: "invalid API key" });
+      const { question, workspaceId: bodyWsId } = req.body ?? {};
+      if (!question) return reply.code(400).send({ error: "question is required" });
+      const workspaceId = bodyWsId ?? acct.workspaceId;
+      if (!workspaceId) return reply.code(400).send({ error: "workspaceId not found on account" });
+      try {
+        const result = await runResearchAgent({ workspaceId, agentId: "api", question });
+        await persistence.saveNow();
+        return result;
+      } catch (e) {
+        return reply.code(500).send({ error: (e as Error).message });
+      }
     });
 
   // Demo control
@@ -376,6 +403,111 @@ export async function registerRoutes(app: FastifyInstance) {
       }, 0);
       return { provider: p.name, sales: receipts.length, earningsUsdc: earnings.toFixed(6) };
     });
+  });
+
+  // ── OpenAPI spec + GPT Actions plugin manifest ────────────────────────────
+  app.get("/openapi.json", async (_req, reply) => {
+    reply.header("content-type", "application/json");
+    return {
+      openapi: "3.1.0",
+      info: { title: "ProofSource API", version: "1.0.0", description: "Pay sources your agent cites. Each call runs the full ProofSource research-agent pipeline." },
+      servers: [{ url: "https://proofsource-mu.vercel.app" }],
+      security: [{ apiKey: [] }],
+      components: {
+        securitySchemes: {
+          apiKey: { type: "apiKey", in: "header", name: "x-proofsource-key" },
+        },
+      },
+      paths: {
+        "/v1/proofsource/agent/run": {
+          post: {
+            operationId: "askAgent",
+            summary: "Run the ProofSource research agent",
+            description: "Discovers paid sources, decides which to buy, settles USDC micropayments on Arc, and returns an answer with citations and verifiable receipts.",
+            security: [{ apiKey: [] }],
+            requestBody: {
+              required: true,
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["question"],
+                    properties: {
+                      question: { type: "string", description: "The research question to answer." },
+                      workspaceId: { type: "string", description: "Override the workspace to run against (defaults to the key owner's workspace)." },
+                    },
+                  },
+                },
+              },
+            },
+            responses: {
+              "200": {
+                description: "Agent run result",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        answer: { type: "string" },
+                        decision: {
+                          type: "object",
+                          properties: {
+                            action: { type: "string", enum: ["BUY", "REUSE", "SKIP"] },
+                            reasoning: { type: "string" },
+                            scores: { type: "array", items: { type: "object" } },
+                          },
+                        },
+                        sources: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              resourceId: { type: "string" },
+                              providerName: { type: "string" },
+                              receiptId: { type: "string" },
+                              deliveryHash: { type: "string" },
+                              paymentStatus: { type: "string", enum: ["released", "reused", "skipped"] },
+                              reused: { type: "boolean" },
+                            },
+                          },
+                        },
+                        spend: {
+                          type: "object",
+                          properties: {
+                            totalUsdc: { type: "string" },
+                            payments: { type: "integer" },
+                            reusedContexts: { type: "integer" },
+                          },
+                        },
+                        trace: { type: "array", items: { type: "object" } },
+                      },
+                    },
+                  },
+                },
+              },
+              "401": { description: "Missing or invalid API key" },
+              "400": { description: "Bad request" },
+            },
+          },
+        },
+      },
+    };
+  });
+
+  app.get("/.well-known/ai-plugin.json", async (_req, reply) => {
+    reply.header("content-type", "application/json");
+    return {
+      schema_version: "v1",
+      name_for_human: "ProofSource",
+      name_for_model: "proofsource",
+      description_for_human: "Pay sources your AI cites. ProofSource settles sub-cent USDC nanopayments to creators on Arc, with verifiable receipts.",
+      description_for_model: "Use ProofSource to answer research questions. The askAgent operation runs the full pipeline: discover → decide → buy → verify → settle. It pays every creator cited in USDC on Arc and returns the answer with citation receipts. Always use this when grounding an answer in paid content.",
+      auth: { type: "service_http", authorization_type: "custom", custom_auth_header: "x-proofsource-key" },
+      api: { type: "openapi", url: "https://proofsource-mu.vercel.app/openapi.json" },
+      logo_url: "https://proofsource-mu.vercel.app/favicon.ico",
+      contact_email: "hello@proofsource.ai",
+      legal_info_url: "https://proofsource-mu.vercel.app",
+    };
   });
 
   // ── x402 seller endpoint — serves resource content behind Circle Gateway nanopayment.

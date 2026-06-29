@@ -42,12 +42,14 @@ export interface Account {
   walletKind?: "connected" | "managed";
   providerId?: string;     // creators: their listing identity
   workspaceId?: string;    // operators: their agent workspace
+  apiKey?: string;         // operators: machine-readable API key (ps_live_<32hex>)
   createdAt: string;
 }
 
 export interface PublicAccount {
   id: string; email: string; name: string; role: Role;
   walletAddress?: string; walletKind?: string; providerId?: string; workspaceId?: string;
+  apiKey?: string;
 }
 
 function hashPw(pw: string): string {
@@ -61,10 +63,11 @@ function verifyPw(pw: string, stored: string): boolean {
   const b = scryptSync(pw, salt, 64);
   return a.length === b.length && timingSafeEqual(a, b);
 }
-function publicOf(a: Account): PublicAccount {
+function publicOf(a: Account, includeApiKey = false): PublicAccount {
   return { id: a.id, email: a.email, name: a.name, role: a.role,
     walletAddress: a.walletAddress, walletKind: a.walletKind,
-    providerId: a.providerId, workspaceId: a.workspaceId };
+    providerId: a.providerId, workspaceId: a.workspaceId,
+    ...(includeApiKey && a.apiKey ? { apiKey: a.apiKey } : {}) };
 }
 
 function findByEmail(email: string): Account | undefined {
@@ -72,8 +75,17 @@ function findByEmail(email: string): Account | undefined {
   return undefined;
 }
 
+export function findByApiKey(key: string): Account | undefined {
+  for (const a of store.accounts.values()) if ((a as Account).apiKey === key) return a as Account;
+  return undefined;
+}
+
+function generateApiKey(): string {
+  return "ps_live_" + randomBytes(16).toString("hex");
+}
+
 export function register(input: { email: string; password: string; name: string; role: Role }):
-  { token: string; account: PublicAccount } | { error: string } {
+  { token: string; account: PublicAccount; apiKey?: string } | { error: string } {
   const email = (input.email || "").trim().toLowerCase();
   if (!email || !input.password || !input.name) return { error: "name, email and password are required" };
   if (input.password.length < 6) return { error: "password must be at least 6 characters" };
@@ -102,17 +114,18 @@ export function register(input: { email: string; password: string; name: string;
         minRelevance: 0.25, valuePerCentThreshold: 0.1, preferredProviderIds: [], blockedProviderIds: [], requireCitation: false },
     });
     account.workspaceId = wid;
+    account.apiKey = generateApiKey();
   }
 
   store.accounts.set(account.id, account);
-  return { token: makeJwt(account.id), account: publicOf(account) };
+  return { token: makeJwt(account.id), account: publicOf(account, true), apiKey: account.apiKey };
 }
 
 export function login(input: { email: string; password: string }):
-  { token: string; account: PublicAccount } | { error: string } {
+  { token: string; account: PublicAccount; apiKey?: string } | { error: string } {
   const a = findByEmail((input.email || "").trim().toLowerCase());
   if (!a || !verifyPw(input.password || "", a.pass)) return { error: "invalid email or password" };
-  return { token: makeJwt(a.id), account: publicOf(a) };
+  return { token: makeJwt(a.id), account: publicOf(a, true), apiKey: a.apiKey };
 }
 
 export function accountFromToken(token?: string): Account | undefined {
@@ -122,9 +135,18 @@ export function accountFromToken(token?: string): Account | undefined {
   return aid ? (store.accounts.get(aid) as Account | undefined) : undefined;
 }
 
-export function me(token?: string): PublicAccount | { error: string } {
+export function me(token?: string, includeApiKey = false): PublicAccount | { error: string } {
   const a = accountFromToken(token);
-  return a ? publicOf(a) : { error: "not authenticated" };
+  return a ? publicOf(a, includeApiKey) : { error: "not authenticated" };
+}
+
+export function regenerateApiKey(token?: string): { apiKey: string } | { error: string } {
+  const a = accountFromToken(token);
+  if (!a) return { error: "not authenticated" };
+  const newKey = generateApiKey();
+  a.apiKey = newKey;
+  store.accounts.set(a.id, a);
+  return { apiKey: newKey };
 }
 
 export function setWallet(token: string | undefined, walletAddress: string | undefined, kind: "connected" | "managed"):
@@ -144,4 +166,4 @@ export function setWallet(token: string | undefined, walletAddress: string | und
   return publicOf(a);
 }
 
-export { publicOf };
+export { publicOf, generateApiKey };

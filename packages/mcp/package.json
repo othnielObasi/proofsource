@@ -2,10 +2,15 @@
   "name": "@proofsource/mcp",
   "version": "0.1.0",
   "type": "module",
-  "bin": { "proofsource-mcp": "src/index.ts" },
-  "scripts": { "start": "tsx src/index.ts" },
+  "description": "ProofSource MCP server — exposes the paying research agent as MCP tools for Claude Desktop, Cursor, Windsurf, and any MCP-compatible client.",
+  "bin": {
+    "proofsource-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "@proofsource/sdk": "*"
+    "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }
