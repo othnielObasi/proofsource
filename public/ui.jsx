@@ -109,25 +109,40 @@ function CountUp({ to, prefix = '', suffix = '', decimals = 0, dur = 1400, style
   return <span style={style}>{prefix}{v.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
 }
 
-/* ---------- Live settlement ticker ---------- */
+/* ---------- Live settlement ticker — real receipts only ---------- */
 function Ticker() {
-  const [items, setItems] = useState(() => Array.from({ length: 14 }, () => PS_DATA.settlement()));
-  useInterval(() => {
-    setItems((cur) => [PS_DATA.settlement(), ...cur].slice(0, 18));
-  }, 2600);
-  const strip = [...items, ...items];
+  const [items, setItems] = useState([]);
+
+  function load() {
+    window.PS_API.receipts().then((data) => {
+      if (Array.isArray(data) && data.length > 0) setItems(data);
+    }).catch(() => {});
+  }
+
+  useEffect(() => { load(); }, []);
+  useInterval(load, 12000);
+
+  // Render nothing until real settlements exist
+  if (items.length === 0) return null;
+
+  // Triple the array so the CSS infinite scroll never gaps
+  const strip = [...items, ...items, ...items];
+  const speed = Math.max(28, items.length * 5);
+
   return (
     <div style={{ position: 'relative', borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)', overflow: 'hidden', background: 'rgba(7,10,16,.5)' }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 60, zIndex: 2, background: 'linear-gradient(90deg,#06080d,transparent)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 60, zIndex: 2, background: 'linear-gradient(270deg,#06080d,transparent)', pointerEvents: 'none' }} />
-      <div style={{ display: 'flex', gap: 30, padding: '11px 0', whiteSpace: 'nowrap', animation: 'tickerflow 46s linear infinite', width: 'max-content' }}>
+      <div style={{ display: 'flex', gap: 30, padding: '11px 0', whiteSpace: 'nowrap', animation: `tickerflow ${speed}s linear infinite`, width: 'max-content' }}>
         {strip.map((s, i) => (
           <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>
             <span style={{ width: 6, height: 6, borderRadius: 99, background: 'var(--earned)', boxShadow: 'var(--glow-earned)' }} />
-            <span style={{ color: 'var(--mut)' }}>{s.creator}</span>
-            <span style={{ color: 'var(--faint)' }}>cited in {s.topic}</span>
-            <span style={{ color: 'var(--earned2)' }}>+{s.amount.toFixed(6)}</span>
-            <span style={{ color: 'var(--faint)', fontSize: 11 }}>{s.receipt}</span>
+            <span style={{ color: 'var(--mut)' }}>{s.providerName || s.providerId}</span>
+            <span style={{ color: 'var(--faint)' }}>
+              {String(s.resourceTitle || s.resourceId || '').slice(0, 28) || 'cited content'}
+            </span>
+            <span style={{ color: 'var(--earned2)' }}>+{Number(s.amountUsdc || 0).toFixed(6)}</span>
+            <span style={{ color: 'var(--faint)', fontSize: 11 }}>{s.id}</span>
           </span>
         ))}
       </div>
