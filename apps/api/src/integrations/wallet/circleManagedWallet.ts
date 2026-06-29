@@ -5,8 +5,14 @@
  * Requires: CIRCLE_API_KEY + CIRCLE_ENTITY_SECRET in env.
  * Generate entity secret: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
  */
-import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
+import { createRequire } from "node:module";
 import { env } from "../../env.js";
+
+// @circle-fin/developer-controlled-wallets ships CJS only — use createRequire in ESM context
+const require = createRequire(import.meta.url);
+const { initiateDeveloperControlledWalletsClient } = require("@circle-fin/developer-controlled-wallets") as {
+  initiateDeveloperControlledWalletsClient: (opts: { apiKey: string; entitySecret: string }) => any;
+};
 
 const WALLET_SET_NAME = "ProofSource Creators";
 const BLOCKCHAIN     = "ARC-TESTNET";
