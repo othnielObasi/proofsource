@@ -1,8 +1,10 @@
 {
   "rewrites": [
-    { "source": "/v1/:path*",       "destination": "/api/index" },
-    { "source": "/demo/:path*",     "destination": "/api/index" },
-    { "source": "/research/:path*", "destination": "/api/index" }
+    { "source": "/v1/:path*",             "destination": "/api/index" },
+    { "source": "/demo/:path*",           "destination": "/api/index" },
+    { "source": "/research/:path*",       "destination": "/api/index" },
+    { "source": "/openapi.json",          "destination": "/api/index" },
+    { "source": "/.well-known/:path*",    "destination": "/api/index" }
   ],
   "env": {
     "PAYMENT_MODE":        "arc_testnet",
