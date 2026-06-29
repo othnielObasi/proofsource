@@ -12,6 +12,8 @@ export interface Provider {
   name: string;
   providerType: ProviderType;
   walletAddress?: string;
+  circleWalletId?: string;  // set when walletKind === "managed" — Circle Programmable Wallet ID
+  walletKind?: "connected" | "managed";
   status: "active" | "pending" | "disabled";
   createdAt: string;
   updatedAt: string;

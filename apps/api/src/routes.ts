@@ -15,6 +15,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Provider, Resource, OperatorMandate } from "../../../packages/shared/src/types.js";
 import { ARC_USDC, ARC_GATEWAY_CONTRACT } from "./env.js";
+import { provisionManagedWallet, getWalletBalance, transferToExternal, isManagedWalletConfigured } from "./integrations/wallet/circleManagedWallet.js";
 
 let sampleXml = "<rss version=\"2.0\"><channel><title>Sample</title><item><title>Per-use licensing</title><link>https://example.com/1</link><description>Sample content</description></item></channel></rss>";
 try {
@@ -50,10 +51,39 @@ export async function registerRoutes(app: FastifyInstance) {
     "/v1/proofsource/auth/wallet", async (req, reply) => {
       const { walletAddress, kind = "connected" } = req.body ?? ({} as any);
       if (!walletAddress && kind !== "managed") return reply.code(400).send({ error: "walletAddress required" });
-      const r = auth.setWallet(req.headers.authorization, walletAddress, kind);
+
+      let resolvedAddress = walletAddress;
+      let circleWalletId: string | undefined;
+
+      if (kind === "managed") {
+        if (!isManagedWalletConfigured()) {
+          return reply.code(501).send({ error: "Managed wallets require CIRCLE_API_KEY and CIRCLE_ENTITY_SECRET." });
+        }
+        const acct = auth.accountFromToken(req.headers.authorization);
+        if (!acct) return reply.code(401).send({ error: "Not authenticated" });
+        try {
+          const provisioned = await provisionManagedWallet(acct.name);
+          resolvedAddress = provisioned.walletAddress;
+          circleWalletId = provisioned.walletId;
+        } catch (e: any) {
+          return reply.code(502).send({ error: "Failed to provision Circle wallet: " + e.message });
+        }
+      }
+
+      const r = auth.setWallet(req.headers.authorization, resolvedAddress, kind);
       if ("error" in r) return reply.code(401).send(r);
+
+      // Persist Circle wallet ID on the provider record
+      if (circleWalletId) {
+        const acct = auth.accountFromToken(req.headers.authorization);
+        if (acct?.providerId) {
+          const provider = store.providers.get(acct.providerId);
+          if (provider) { provider.circleWalletId = circleWalletId; provider.walletKind = "managed"; }
+        }
+      }
+
       persistence.scheduleSave();
-      return r;
+      return { ...r, walletAddress: resolvedAddress, managed: kind === "managed", circleWalletId };
     });
 
   // Demo control
@@ -112,24 +142,43 @@ export async function registerRoutes(app: FastifyInstance) {
     });
 
   // ── Creator self-serve (the writer/publisher experience) ──────────────────
-  // Register: list your work, set a price, get paid. A managed wallet is provisioned
-  // if you don't supply one, so a writer never has to understand crypto. (In production
-  // managedWallet maps to a Circle Wallet; here it's a deterministic placeholder.)
+  // Register: list your work, set a price, get paid. Managed wallet provisions a real
+  // Circle Programmable Wallet so the creator never has to understand crypto.
   app.post<{ Body: { name?: string; walletAddress?: string; feedUrl?: string; sample?: boolean; priceUsdc?: string; managedWallet?: boolean } }>(
     "/v1/proofsource/creators/register", async (req) => {
       const b = req.body ?? {};
       if (!b.name) return { error: "name is required" };
       if (!b.walletAddress && !b.managedWallet && !b.sample) return { error: "supply a wallet address or request a managed wallet" };
-      const id = "prov_" + sha256("creator:" + b.name).slice(7, 23);
-      const walletAddress = b.walletAddress || ("0x" + sha256("managed:" + b.name).slice(7, 47)); // managed-wallet stub
-      const existing = store.providers.get(id);
+      const pid = "prov_" + sha256("creator:" + b.name).slice(7, 23);
+
+      let walletAddress: string;
+      let circleWalletId: string | undefined;
+      if (b.walletAddress) {
+        walletAddress = b.walletAddress;
+      } else if (b.managedWallet && isManagedWalletConfigured()) {
+        try {
+          const provisioned = await provisionManagedWallet(b.name);
+          walletAddress = provisioned.walletAddress;
+          circleWalletId = provisioned.walletId;
+        } catch (e: any) {
+          return { error: "Failed to provision Circle wallet: " + e.message };
+        }
+      } else {
+        // Fallback stub for sample/demo mode without Circle creds
+        walletAddress = "0x" + sha256("managed:" + b.name).slice(7, 47);
+      }
+
+      const existing = store.providers.get(pid);
       const provider: Provider = existing ?? {
-        id, name: b.name, providerType: "publisher", walletAddress,
+        id: pid, name: b.name, providerType: "publisher", walletAddress,
+        walletKind: b.walletAddress ? "connected" : "managed",
         status: "active", createdAt: nowIso(), updatedAt: nowIso(),
       };
       provider.walletAddress = walletAddress;
-      store.providers.set(id, provider);
-      if (!existing) audit("provider.created", "provider", id, { via: "self-serve" });
+      if (circleWalletId) provider.circleWalletId = circleWalletId;
+      store.providers.set(pid, provider);
+      if (!existing) audit("provider.created", "provider", pid, { via: "self-serve" });
+      const id = pid;
 
       let listed = 0;
       try {
@@ -214,6 +263,36 @@ export async function registerRoutes(app: FastifyInstance) {
       recent,
     };
   });
+
+  // Managed wallet: live Circle balance for the creator
+  app.get<{ Params: { id: string } }>("/v1/proofsource/creators/:id/balance", async (req, reply) => {
+    const provider = store.providers.get(req.params.id);
+    if (!provider) return reply.code(404).send({ error: "creator not found" });
+    if (!provider.circleWalletId) return reply.code(400).send({ error: "no managed wallet — creator uses an external wallet" });
+    try {
+      const balance = await getWalletBalance(provider.circleWalletId);
+      return { walletId: balance.walletId, walletAddress: provider.walletAddress, usdcBalance: balance.usdc };
+    } catch (e: any) {
+      return reply.code(502).send({ error: "Failed to fetch balance: " + e.message });
+    }
+  });
+
+  // Managed wallet: withdraw USDC to an external address
+  app.post<{ Params: { id: string }; Body: { destinationAddress: string; amountUsdc: string } }>(
+    "/v1/proofsource/creators/:id/withdraw", async (req, reply) => {
+      const provider = store.providers.get(req.params.id);
+      if (!provider) return reply.code(404).send({ error: "creator not found" });
+      if (!provider.circleWalletId) return reply.code(400).send({ error: "no managed wallet" });
+      const { destinationAddress, amountUsdc } = req.body ?? {};
+      if (!destinationAddress || !amountUsdc) return reply.code(400).send({ error: "destinationAddress and amountUsdc required" });
+      try {
+        const result = await transferToExternal(provider.circleWalletId, destinationAddress, amountUsdc);
+        audit("creator.withdrawal", "provider", provider.id, { destinationAddress, amountUsdc, txId: result.txId });
+        return { txId: result.txId, status: "pending", amountUsdc, destinationAddress };
+      } catch (e: any) {
+        return reply.code(502).send({ error: "Withdrawal failed: " + e.message });
+      }
+    });
 
   app.post<{ Body: { workspaceId: string; question: string } }>(
     "/v1/proofsource/agent/decision", async (req) => {

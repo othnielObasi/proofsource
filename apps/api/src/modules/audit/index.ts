@@ -9,7 +9,8 @@ export type AuditType =
   | "receipt.created" | "paid_context.created" | "paid_context.reused"
   | "purchase.skipped"
   | "settlement.authorized" | "settlement.delivering" | "settlement.verified"
-  | "settlement.settling" | "settlement.settled" | "settlement.failed";
+  | "settlement.settling" | "settlement.settled" | "settlement.failed"
+  | "creator.withdrawal";
 
 export function audit(
   eventType: AuditType,

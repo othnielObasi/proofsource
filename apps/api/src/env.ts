@@ -22,6 +22,7 @@ export interface Env {
   arcChainId: number;
   arcX402Network: string;
   circleApiKey?: string;
+  circleEntitySecret?: string; // 32-byte hex — for Circle Programmable Wallets (managed wallet path)
   circleGatewayUrl: string;   // Circle Gateway API base URL
   platformWallet?: string;
   agentPrivateKey?: string;   // signer key for EIP-3009 — load from vault in prod
@@ -48,6 +49,7 @@ export function loadEnv(): Env {
     arcChainId: Number(process.env.ARC_TESTNET_CHAIN_ID ?? ARC_CHAIN_ID),
     arcX402Network: process.env.ARC_X402_NETWORK ?? ARC_X402_NETWORK_DEFAULT,
     circleApiKey: process.env.CIRCLE_API_KEY,
+    circleEntitySecret: process.env.CIRCLE_ENTITY_SECRET,
     circleGatewayUrl: process.env.CIRCLE_GATEWAY_URL ?? "https://gateway-api-testnet.circle.com",
     platformWallet: process.env.PLATFORM_WALLET_ADDRESS,
     agentPrivateKey: process.env.AGENT_PRIVATE_KEY,
