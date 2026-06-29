@@ -1,16 +1,26 @@
 {
   "name": "@proofsource/openclaw-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ProofSource OpenClaw/OpenAI-compatible plugin — lets Claude.ai and GPT agents pay creators in USDC per citation on Arc.",
   "type": "module",
   "main": "./src/index.js",
   "bin": {
-    "proofsource-openclaw": "./src/index.js"
+    "proofsource-openclaw": "src/index.js"
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "start": "node src/index.js"
   },
-  "keywords": ["openclaw", "proofsource", "claude-plugin", "arc", "micropayment", "openai-plugin"],
+  "keywords": [
+    "openclaw",
+    "proofsource",
+    "claude-plugin",
+    "arc",
+    "micropayment",
+    "openai-plugin"
+  ],
   "license": "MIT"
 }
