@@ -34,7 +34,8 @@ class Store {
   idempotency = new Map<string, string>();
 
   reset() {
-    this.workspaces.clear();
+    // Preserve accounts and their workspaces so API keys / sessions survive a seed.
+    // Only reset transactional + content data.
     this.providers.clear();
     this.resources.clear();
     this.authorizations.clear();
@@ -45,7 +46,6 @@ class Store {
     this.paidContexts.clear();
     this.settlements.clear();
     this.auditEvents = [];
-    this.accounts.clear();
     this.sessions.clear();
     this.idempotency.clear();
   }
