@@ -1,13 +1,35 @@
-// Lightweight accounts + sessions for the coherent product flow. Hackathon-grade
-// (scrypt-hashed passwords, random bearer tokens, sessions in memory) — NOT production
-// auth, but real enough that creators and operators sign up, sign in, and connect a
-// wallet. Accounts persist via the snapshot layer; sessions reset on restart (re-login).
-
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { store } from "../../db.js";
 import { id, nowIso, sha256 } from "../../lib/hash.js";
 import { audit } from "../audit/index.js";
 import type { Provider } from "../../../../../packages/shared/src/types.js";
+
+// ── Stateless JWT sessions ────────────────────────────────────────────────────
+// Tokens are HMAC-SHA256 signed so they work across any serverless instance
+// without a shared session store. Set JWT_SECRET in env; falls back to a
+// per-process random value in dev (sessions reset on restart, fine for local).
+const JWT_SECRET = process.env.JWT_SECRET ?? randomBytes(32).toString("hex");
+const JWT_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function makeJwt(accountId: string): string {
+  const header  = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ sub: accountId, exp: Date.now() + JWT_TTL_MS })).toString("base64url");
+  const sig     = createHmac("sha256", JWT_SECRET).update(`${header}.${payload}`).digest("base64url");
+  return `${header}.${payload}.${sig}`;
+}
+
+function verifyJwt(token: string): string | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [header, payload, sig] = parts;
+  const expected = createHmac("sha256", JWT_SECRET).update(`${header}.${payload}`).digest("base64url");
+  try {
+    if (!timingSafeEqual(Buffer.from(sig, "base64url"), Buffer.from(expected, "base64url"))) return null;
+    const { sub, exp } = JSON.parse(Buffer.from(payload, "base64url").toString());
+    if (!sub || Date.now() > exp) return null;
+    return sub as string;
+  } catch { return null; }
+}
 
 export type Role = "creator" | "operator";
 export interface Account {
@@ -83,24 +105,20 @@ export function register(input: { email: string; password: string; name: string;
   }
 
   store.accounts.set(account.id, account);
-  const token = randomBytes(24).toString("hex");
-  store.sessions.set(token, account.id);
-  return { token, account: publicOf(account) };
+  return { token: makeJwt(account.id), account: publicOf(account) };
 }
 
 export function login(input: { email: string; password: string }):
   { token: string; account: PublicAccount } | { error: string } {
   const a = findByEmail((input.email || "").trim().toLowerCase());
   if (!a || !verifyPw(input.password || "", a.pass)) return { error: "invalid email or password" };
-  const token = randomBytes(24).toString("hex");
-  store.sessions.set(token, a.id);
-  return { token, account: publicOf(a) };
+  return { token: makeJwt(a.id), account: publicOf(a) };
 }
 
 export function accountFromToken(token?: string): Account | undefined {
   if (!token) return undefined;
   const t = token.replace(/^Bearer\s+/i, "");
-  const aid = store.sessions.get(t);
+  const aid = verifyJwt(t);
   return aid ? (store.accounts.get(aid) as Account | undefined) : undefined;
 }
 
