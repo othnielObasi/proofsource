@@ -3,11 +3,19 @@
 function AppCreator({ go }) {
   const session = useStore((s) => s.session);
   const creator = useStore((s) => s.creator);
+  const [listMode, setListMode] = useState('feed'); // 'feed' | 'manual'
   const [feedUrl, setFeedUrl] = useState('');
   const [feedPrice, setFeedPrice] = useState('');
   const [listing, setListing] = useState(false);
   const [listed, setListed] = useState(null); // null | number (count)
   const [feedErr, setFeedErr] = useState('');
+  const [itemTitle, setItemTitle] = useState('');
+  const [itemBody, setItemBody] = useState('');
+  const [itemPrice, setItemPrice] = useState('');
+  const [itemSourceUrl, setItemSourceUrl] = useState('');
+  const [itemBusy, setItemBusy] = useState(false);
+  const [itemErr, setItemErr] = useState('');
+  const [itemOk, setItemOk] = useState(false);
   const [showWallet, setShowWallet] = useState(false);
   const [connecting, setConnecting] = useState(null);
   const [walletErr, setWalletErr] = useState('');
@@ -132,6 +140,30 @@ function AppCreator({ go }) {
     }
   }
 
+  async function submitItem(e) {
+    e && e.preventDefault();
+    setItemErr(''); setItemOk(false);
+    if (!itemTitle.trim()) { setItemErr('Give it a title.'); return; }
+    if (itemBody.trim().length < 40) { setItemErr('Paste the full text — at least 40 characters.'); return; }
+    setItemBusy(true);
+    try {
+      await window.PS_API.listItem({
+        title: itemTitle.trim(), body: itemBody.trim(),
+        priceUsdc: itemPrice || undefined, sourceUrl: itemSourceUrl.trim() || undefined,
+      });
+      setItemOk(true);
+      setItemTitle(''); setItemBody(''); setItemPrice(''); setItemSourceUrl('');
+      if (providerId) {
+        const updated = await window.PS_API.earnings(providerId);
+        setEarningsData(updated);
+      }
+    } catch (e) {
+      setItemErr(e.data?.error || e.message || 'Failed to list it.');
+    } finally {
+      setItemBusy(false);
+    }
+  }
+
   async function submitWithdraw(e) {
     e && e.preventDefault();
     if (!withdrawAddr.trim() || !withdrawAmt.trim()) return;
@@ -202,22 +234,52 @@ function AppCreator({ go }) {
 
       {/* ── List work ───────────────────────────────────────── */}
       <div style={{ marginBottom: 36 }}>
-        <div style={{ fontSize: 12, color: 'var(--faint)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 12 }}>List your work</div>
-        <form onSubmit={submitFeed} style={{ background: 'var(--card-fill)', border: '1px solid var(--line)', borderRadius: 11, padding: '18px 18px 16px' }}>
-          <label style={{ display: 'block', fontSize: 12, color: 'var(--faint)', marginBottom: 7 }}>Feed URL — any RSS/Atom or RSSHub route</label>
-          <input style={inp} placeholder="https://yourblog.com/rss · or an RSSHub route" value={feedUrl} onChange={(e) => setFeedUrl(e.target.value)} />
-          <div style={{ display: 'flex', gap: 10, marginTop: 10, alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--panel2)', border: '1px solid var(--line)', borderRadius: 8, padding: '0 12px', height: 42, flexShrink: 0 }}>
-              <span style={{ fontSize: 12, color: 'var(--faint)' }}>Price</span>
-              <input style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 14, width: 64, textAlign: 'right' }} placeholder={creator.priceDefault.toFixed(3)} value={feedPrice} onChange={(e) => setFeedPrice(e.target.value)} />
-              <span style={{ fontSize: 12, color: 'var(--faint)' }}>USDC</span>
-            </div>
-            <Btn variant="earn" type="submit" disabled={listing} style={{ height: 42 }}>{listing ? 'Listing…' : 'List feed'}</Btn>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--faint)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>List your work</div>
+          <div style={{ display: 'flex', gap: 2, background: 'var(--panel2)', border: '1px solid var(--line)', borderRadius: 8, padding: 2 }}>
+            {[['feed', 'From a feed'], ['manual', 'Paste an article']].map(([id, label]) => (
+              <div key={id} onClick={() => setListMode(id)} style={{ cursor: 'pointer', fontSize: 12, padding: '6px 11px', borderRadius: 6, color: listMode === id ? 'var(--text)' : 'var(--faint)', background: listMode === id ? 'rgba(255,255,255,.07)' : 'transparent', fontWeight: listMode === id ? 600 : 400 }}>{label}</div>
+            ))}
           </div>
-          {listed !== null && listed > 0 && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--earned)', fontFamily: 'var(--font-mono)' }}>✓ {listed} piece(s) listed. Agents can now cite and pay for your work.</div>}
-          {listed === 0 && !feedErr && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--skip)', fontFamily: 'var(--font-mono)' }}>Feed listed (0 items parsed — check the URL).</div>}
-          {feedErr && <div style={{ marginTop: 10, padding: '9px 12px', background: 'rgba(220,60,40,.08)', border: '1px solid rgba(220,60,40,.25)', borderRadius: 8, color: '#f4a09a', fontSize: 13 }}>{feedErr}</div>}
-        </form>
+        </div>
+
+        {listMode === 'feed' ? (
+          <form onSubmit={submitFeed} style={{ background: 'var(--card-fill)', border: '1px solid var(--line)', borderRadius: 11, padding: '18px 18px 16px' }}>
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--faint)', marginBottom: 7 }}>Feed URL — any RSS/Atom or RSSHub route</label>
+            <input style={inp} placeholder="https://yourblog.com/rss · or an RSSHub route" value={feedUrl} onChange={(e) => setFeedUrl(e.target.value)} />
+            <div style={{ display: 'flex', gap: 10, marginTop: 10, alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--panel2)', border: '1px solid var(--line)', borderRadius: 8, padding: '0 12px', height: 42, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: 'var(--faint)' }}>Price</span>
+                <input style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 14, width: 64, textAlign: 'right' }} placeholder={creator.priceDefault.toFixed(3)} value={feedPrice} onChange={(e) => setFeedPrice(e.target.value)} />
+                <span style={{ fontSize: 12, color: 'var(--faint)' }}>USDC</span>
+              </div>
+              <Btn variant="earn" type="submit" disabled={listing} style={{ height: 42 }}>{listing ? 'Listing…' : 'List feed'}</Btn>
+            </div>
+            {listed !== null && listed > 0 && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--earned)', fontFamily: 'var(--font-mono)' }}>✓ {listed} piece(s) listed. Agents can now cite and pay for your work.</div>}
+            {listed === 0 && !feedErr && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--skip)', fontFamily: 'var(--font-mono)' }}>Feed listed (0 items parsed). RSS/Atom only — a LinkedIn post or regular webpage won't parse here. Use "Paste an article" instead.</div>}
+            {feedErr && <div style={{ marginTop: 10, padding: '9px 12px', background: 'rgba(220,60,40,.08)', border: '1px solid rgba(220,60,40,.25)', borderRadius: 8, color: '#f4a09a', fontSize: 13 }}>{feedErr}</div>}
+          </form>
+        ) : (
+          <form onSubmit={submitItem} style={{ background: 'var(--card-fill)', border: '1px solid var(--line)', borderRadius: 11, padding: '18px 18px 16px' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--mut)', marginBottom: 14, lineHeight: 1.5 }}>For content with no public feed — LinkedIn posts, paywalled articles, anything you'd otherwise copy by hand. Paste the full text so agents have something real to cite.</div>
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--faint)', marginBottom: 7 }}>Title</label>
+            <input style={{ ...inp, marginBottom: 12 }} placeholder="Governing Generative AI in Production" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} />
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--faint)', marginBottom: 7 }}>Article text</label>
+            <textarea style={{ ...inp, height: 140, resize: 'vertical', fontFamily: 'var(--font-sans)', lineHeight: 1.5, paddingTop: 10 }} placeholder="Paste the full article text here…" value={itemBody} onChange={(e) => setItemBody(e.target.value)} />
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--faint)', margin: '12px 0 7px' }}>Source URL (optional, for provenance)</label>
+            <input style={{ ...inp, marginBottom: 0 }} placeholder="https://www.linkedin.com/pulse/…" value={itemSourceUrl} onChange={(e) => setItemSourceUrl(e.target.value)} />
+            <div style={{ display: 'flex', gap: 10, marginTop: 12, alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--panel2)', border: '1px solid var(--line)', borderRadius: 8, padding: '0 12px', height: 42, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: 'var(--faint)' }}>Price</span>
+                <input style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 14, width: 64, textAlign: 'right' }} placeholder={creator.priceDefault.toFixed(3)} value={itemPrice} onChange={(e) => setItemPrice(e.target.value)} />
+                <span style={{ fontSize: 12, color: 'var(--faint)' }}>USDC</span>
+              </div>
+              <Btn variant="earn" type="submit" disabled={itemBusy} style={{ height: 42 }}>{itemBusy ? 'Listing…' : 'List this piece'}</Btn>
+            </div>
+            {itemOk && <div style={{ marginTop: 10, fontSize: 13, color: 'var(--earned)', fontFamily: 'var(--font-mono)' }}>✓ Listed. Agents can now cite and pay for it.</div>}
+            {itemErr && <div style={{ marginTop: 10, padding: '9px 12px', background: 'rgba(220,60,40,.08)', border: '1px solid rgba(220,60,40,.25)', borderRadius: 8, color: '#f4a09a', fontSize: 13 }}>{itemErr}</div>}
+          </form>
+        )}
       </div>
 
       {/* ── Stats row ───────────────────────────────────────── */}

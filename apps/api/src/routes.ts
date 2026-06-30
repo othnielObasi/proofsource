@@ -254,6 +254,34 @@ export async function registerRoutes(app: FastifyInstance) {
       }
     });
 
+  // Authed: list a single piece directly (paste title + body) — for content that
+  // can't be pulled via RSS/Atom (LinkedIn posts, paywalled articles, etc.).
+  app.post<{ Body: { title?: string; body?: string; priceUsdc?: string; sourceUrl?: string } }>(
+    "/v1/proofsource/creators/list-item", async (req, reply) => {
+      const acct = auth.accountFromToken(req.headers.authorization);
+      if (!acct || acct.role !== "creator" || !acct.providerId)
+        return reply.code(401).send({ error: "sign in as a creator first" });
+      const b = req.body ?? {};
+      const title = (b.title ?? "").trim();
+      const body = (b.body ?? "").trim();
+      if (!title) return reply.code(400).send({ error: "title is required" });
+      if (body.length < 40) return reply.code(400).send({ error: "paste the full article text (at least 40 characters)" });
+      const r: Resource = {
+        id: id("res"), providerId: acct.providerId, title,
+        description: body.slice(0, 160) + (body.length > 160 ? "…" : ""),
+        resourceType: "article",
+        contentBody: body, contentHash: sha256(body),
+        priceUsdc: b.priceUsdc || "0.002",
+        usageRights: { usageType: "citation", reusable: true, expiresInDays: 30 },
+        freshnessHalfLifeDays: 14,
+        status: "active", createdAt: nowIso(), updatedAt: nowIso(),
+      };
+      store.resources.set(r.id, r);
+      audit("resource.created", "resource", r.id, { via: "manual", sourceUrl: b.sourceUrl });
+      await persistence.saveNow();
+      return { resourceId: r.id, providerId: acct.providerId };
+    });
+
   // A creator's earnings: total, per-piece, and recent verified citations (with proof).
   app.get<{ Params: { id: string } }>("/v1/proofsource/creators/:id/earnings", async (req) => {
     const provider = store.providers.get(req.params.id);
