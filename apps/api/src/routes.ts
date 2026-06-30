@@ -290,11 +290,16 @@ export async function registerRoutes(app: FastifyInstance) {
     const amountOf = (authId: string) => Number(store.authorizations.get(authId)?.amountUsdc ?? 0);
     const totalEarned = receipts.reduce((s, r) => s + amountOf(r.authorizationId), 0);
 
-    const perPiece = new Map<string, { title: string; citations: number; earningsUsdc: number }>();
+    const pieces = [...store.resources.values()].filter((x) => x.providerId === provider.id);
+
+    // Seed every listed piece (even uncited ones) so the creator can see what
+    // they've listed, not just what's already earned money.
+    const perPiece = new Map<string, { id: string; title: string; citations: number; earningsUsdc: number }>();
+    for (const p of pieces) perPiece.set(p.id, { id: p.id, title: p.title, citations: 0, earningsUsdc: 0 });
     for (const r of receipts) {
       const res = store.resources.get(r.resourceId);
       const k = r.resourceId;
-      const cur = perPiece.get(k) ?? { title: res?.title ?? k, citations: 0, earningsUsdc: 0 };
+      const cur = perPiece.get(k) ?? { id: k, title: res?.title ?? k, citations: 0, earningsUsdc: 0 };
       cur.citations++; cur.earningsUsdc += amountOf(r.authorizationId);
       perPiece.set(k, cur);
     }
@@ -311,7 +316,6 @@ export async function registerRoutes(app: FastifyInstance) {
         explorerUrl: r.chainReference?.explorerUrl,
       }));
 
-    const pieces = [...store.resources.values()].filter((x) => x.providerId === provider.id);
     return {
       creator: provider.name, walletAddress: provider.walletAddress,
       paymentMode: env.paymentMode,
