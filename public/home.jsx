@@ -94,6 +94,96 @@ const HOW = [
   { n: '04', t: 'Proof of earning', d: 'Every citation leaves a tamper-evident receipt and a reusable paid-context record.' },
 ];
 
+/* ── New sections ─────────────────────────────────── */
+
+function CompatStrip() {
+  const items = ['Claude', 'GPT-4o', 'Gemini', 'Llama 3', 'Arc testnet', 'x402'];
+  return (
+    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '10px 26px 22px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--faint)', letterSpacing: '.1em', textTransform: 'uppercase', marginRight: 4, whiteSpace: 'nowrap' }}>Works with</span>
+      {items.map((l) => (
+        <span key={l} style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--mut)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 5, padding: '3px 10px' }}>{l}</span>
+      ))}
+    </div>
+  );
+}
+
+function AmountMoment() {
+  return (
+    <section style={{ maxWidth: 1180, margin: '0 auto', padding: '8px 26px 52px' }}>
+      <div style={{ textAlign: 'center', padding: '62px 24px 56px', background: 'linear-gradient(180deg, rgba(84,180,136,.06) 0%, transparent 100%)', border: '1px solid rgba(84,180,136,.13)', borderRadius: 22, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(84,180,136,.11), transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(54px,9.5vw,108px)', color: 'var(--earned2)', letterSpacing: '-.04em', lineHeight: 1, marginBottom: 18, filter: 'drop-shadow(0 0 48px rgba(84,180,136,.22))' }}>
+            $0.002000
+          </div>
+          <div style={{ fontSize: 17, color: 'var(--mut)', lineHeight: 1.5 }}>what an AI agent pays per citation — verified, on-chain, every time</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 40, marginTop: 28, flexWrap: 'wrap' }}>
+            {[['sub-cent', 'every transaction'], ['7-check', 'verified delivery'], ['Arc chain', 'USDC settlement']].map(([k, v]) => (
+              <div key={k} style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--earned2)', marginBottom: 3 }}>{k}</div>
+                <div style={{ fontSize: 12, color: 'var(--faint)' }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const EXAMPLE_RUNS = [
+  {
+    q: 'What does the IPCC say about carbon removal through reforestation?',
+    action: 'BUY', tone: 'buy', amount: '$0.002000', creator: 'IPCC Working Group III',
+  },
+  {
+    q: 'How does the x402 payment protocol authenticate AI agent requests?',
+    action: 'REUSE', tone: 'reuse', amount: '$0.000000', creator: 'paid context reused',
+  },
+  {
+    q: 'ICU treatment protocols for acute pancreatitis — latest evidence.',
+    action: 'BUY', tone: 'buy', amount: '$0.004800', creator: 'NEJM Editorial Board',
+  },
+];
+
+function RunCard({ q, action, tone, amount, creator }) {
+  return (
+    <div style={{ background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16, minHeight: 148 }}>
+      <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.45, color: 'var(--text)', flex: 1 }}>{q}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <Badge tone={tone}>{action}</Badge>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: tone === 'buy' ? 'var(--earned2)' : 'var(--faint)' }}>{amount}</span>
+        <span style={{ fontSize: 12, color: 'var(--mut)', marginLeft: 'auto' }}>{creator}</span>
+      </div>
+    </div>
+  );
+}
+
+function BottomCTA({ go }) {
+  return (
+    <section style={{ maxWidth: 1180, margin: '0 auto', padding: '0 26px 88px' }}>
+      <div style={{ borderRadius: 22, background: 'linear-gradient(135deg,rgba(9,14,26,1) 0%,rgba(14,24,40,1) 100%)', border: '1px solid rgba(91,192,235,.14)', padding: 'clamp(44px,6vw,72px) clamp(28px,5vw,64px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 80% at 50% 110%, rgba(84,180,136,.09), transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative' }}>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(34px,5vw,58px)', letterSpacing: '-.04em', margin: '0 0 14px', lineHeight: 1.08 }}>
+            One API.<br /><em style={{ fontStyle: 'normal', color: 'var(--earned2)' }}>Every citation paid.</em>
+          </h2>
+          <p style={{ color: 'var(--mut)', fontSize: 16, maxWidth: 460, margin: '0 auto 32px', lineHeight: 1.55 }}>
+            ProofSource wires into any LLM pipeline in minutes. Creators list once and earn every time an agent cites their work.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Btn variant="earn" size="lg" onClick={() => go('creators')}>Start earning</Btn>
+            <Btn variant="primary" size="lg" onClick={() => go('operators')}>Run a paying agent</Btn>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────── */
+
 function Home({ go }) {
   const [traction, setTraction] = useState(null);
 
@@ -130,6 +220,9 @@ function Home({ go }) {
         <MiniMonitor />
       </section>
 
+      {/* COMPAT STRIP */}
+      <CompatStrip />
+
       <Ticker />
 
       {/* METRICS BAND — real from API */}
@@ -150,6 +243,9 @@ function Home({ go }) {
         </div>
       </section>
 
+      {/* GIANT AMOUNT MOMENT */}
+      <AmountMoment />
+
       {/* PROOF MOMENT */}
       <section style={{ maxWidth: 1180, margin: '0 auto', padding: '26px 26px 56px', borderTop: '1px solid var(--line-soft)', display: 'grid', gridTemplateColumns: '1fr auto', gap: 48, alignItems: 'center' }} className="proof-grid">
         <div>
@@ -164,6 +260,14 @@ function Home({ go }) {
         </div>
       </section>
 
+      {/* EXAMPLE CITATION RUNS */}
+      <section style={{ maxWidth: 1180, margin: '0 auto', padding: '0 26px 60px' }}>
+        <SectionHead eyebrow="Every run, settled" title="From question to paid citation." center style={{ marginBottom: 26 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }} className="use-grid">
+          {EXAMPLE_RUNS.map((r, i) => <RunCard key={i} {...r} />)}
+        </div>
+      </section>
+
       {/* DOORS */}
       <section style={{ maxWidth: 1180, margin: '0 auto', padding: '0 26px 16px' }}>
         <SectionHead eyebrow="Two sides of the floor" title="Pick your side." center style={{ marginBottom: 26 }} />
@@ -174,7 +278,7 @@ function Home({ go }) {
       </section>
 
       {/* HOW IT WORKS */}
-      <section style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 26px 80px' }}>
+      <section style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 26px 72px' }}>
         <SectionHead eyebrow="How it works" title="From a creator's feed to a provable, paid citation." center style={{ marginBottom: 30 }} />
         <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18 }} className="how-grid">
           <div style={{ position: 'absolute', left: '12%', right: '12%', top: 19, height: 2, background: 'linear-gradient(90deg,var(--earned),var(--buy),var(--skip))', opacity: .55 }} className="how-rail" />
@@ -187,6 +291,9 @@ function Home({ go }) {
           ))}
         </div>
       </section>
+
+      {/* BOTTOM CTA */}
+      <BottomCTA go={go} />
     </div>
   );
 }
