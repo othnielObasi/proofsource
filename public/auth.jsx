@@ -103,7 +103,7 @@ function Auth({ go, initialMode, initialRole }) {
           {mode === 'create' && (
             <div style={{ marginBottom: 14 }}>
               <label style={labS}>{isCreator ? 'Your name' : 'Organization'}</label>
-              <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder={isCreator ? 'Ada Powell' : 'Northwind Research'} autoComplete="name" />
+              <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder={isCreator ? 'Full name' : 'Organization name'} autoComplete="name" />
             </div>
           )}
 
