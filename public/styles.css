@@ -1,6 +1,6 @@
 /* ProofSource Design System — shared tokens consumed by redesign/ */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
 
 :root {
   /* ── Canvas & structure ─────────────────────────────── */
@@ -56,8 +56,8 @@
 
   /* ── Typography ─────────────────────────────────────── */
   --font-serif:   'Fraunces', Georgia, serif;
-  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans:    'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono:    'Geist Mono', 'JetBrains Mono', monospace;
 
   /* ── Blueprint grid (sacred motif) ──────────────────── */
   --grid-image:   linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
