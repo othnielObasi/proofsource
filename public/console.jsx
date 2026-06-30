@@ -63,9 +63,10 @@ function AppConsole({ go }) {
   const [replaySteps, setReplaySteps] = useState([]);
   const [receiptChain, setReceiptChain] = useState(null); // { explorerUrl, transactionHash }
 
-  const steps = replaySteps.length > 0 ? replaySteps : PS_DATA.runs.licensing.pipeline;
+  const GENERIC_STEPS = ['discover', 'decide', 'policy', 'authorize', 'deliver', 'verify', 'release', 'receipt'];
+  const steps = replaySteps.length > 0 ? replaySteps : GENERIC_STEPS;
   const done = result && reached >= steps.length && reached > 0;
-  const showTable = reached >= 2 || done;
+  const showTable = (reached >= 2 || done) && !!result;
   const idle = reached <= 0 && !running && !result;
 
   // Replay animation tick
@@ -113,8 +114,8 @@ function AppConsole({ go }) {
     setEditMandate(false);
   }
 
-  // Derive display values from real result or fall back to mock for idle state
-  const action = result?.decision?.action || 'BUY';
+  // Derive display values from real API result only — no fake fallbacks
+  const action = result?.decision?.action || null;
   const badgeTone = action === 'BUY' ? 'buy' : action === 'REUSE' ? 'reuse' : 'skip';
   const reasoning = result?.decision?.reasoning || '';
   const candidates = result?.decision?.scores?.map((s) => ({
@@ -124,7 +125,7 @@ function AppConsole({ go }) {
     price: Number(s.priceUsdc || 0),
     tone: s.verdict === 'bought' ? 'buy' : s.verdict === 'reused' ? 'reuse' : 'skip',
     verdict: s.verdict || 'skipped',
-  })) || PS_DATA.runs.licensing.candidates;
+  })) || [];
   const answer = result?.answer || '';
   const paidSource = result?.sources?.[0];
   const receiptId = paidSource?.receiptId;
@@ -215,7 +216,7 @@ function AppConsole({ go }) {
           {!idle && (
             <div style={{ background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 12, padding: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <Badge tone={badgeTone}>{running && reached < 2 ? '…' : action}</Badge>
+                <Badge tone={badgeTone}>{(running || !result) ? '…' : action}</Badge>
                 <span style={{ fontSize: 13, color: 'var(--mut)', flex: 1 }}>{showTable ? reasoning || 'Evaluating sources…' : 'Scoring permitted sources…'}</span>
               </div>
 

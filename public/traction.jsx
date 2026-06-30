@@ -73,7 +73,7 @@ function AppTraction({ go }) {
 
       {/* funnel inline */}
       <div style={{ display: 'flex', gap: 36, padding: '0 0 24px', marginBottom: 28, borderBottom: '1px solid rgba(255,255,255,.07)', flexWrap: 'wrap' }}>
-        {[['Reader-agents', apiData ? String(apiData.readers) : '25'], ['Tasks run', platSettled.toLocaleString()], ['→ pays', convRate + '%'], ['Reuse rate', reuseRate + '%'], ['Cost / task', '$' + costPerTask]].map(([l, v], i) => (
+        {[['Reader-agents', apiData ? String(apiData.readers) : '—'], ['Tasks run', platSettled.toLocaleString()], ['→ pays', convRate + '%'], ['Reuse rate', reuseRate + '%'], ['Cost / task', '$' + costPerTask]].map(([l, v], i) => (
           <div key={i}>
             <div style={{ fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700, marginBottom: 4 }}>{l}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 19, letterSpacing: '-.02em', color: 'var(--text)' }}>{v}</div>

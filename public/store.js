@@ -85,37 +85,18 @@ window.Store = (function () {
 
   /* ---------- auth ---------- */
   function signIn({ name, email, role, providerId, walletAddress, walletKind, apiKey }) {
-    set({ session: { name: name || (role === 'creator' ? 'Ada Powell' : 'Northwind Research'), email: email || '', role, providerId: providerId || null, wallet: walletAddress || (state.session && state.session.wallet) || null, walletKind: walletKind || (state.session && state.session.walletKind) || null, apiKey: apiKey || (state.session && state.session.apiKey) || null } });
+    set({ session: { name: name || '', email: email || '', role, providerId: providerId || null, wallet: walletAddress || (state.session && state.session.wallet) || null, walletKind: walletKind || (state.session && state.session.walletKind) || null, apiKey: apiKey || (state.session && state.session.apiKey) || null } });
   }
   function signOut() { window.PS_API.setToken(null); set({ session: null }); }
 
   /* ---------- creator ---------- */
-  function seedCreator() {
-    if (state.creator.pieces.length) return;
-    const seed = [
-      { title: 'The case for per-use content licensing', citations: 412, earned: 0.824 },
-      { title: 'Who owns a sentence an AI repeats?', citations: 188, earned: 0.376 },
-      { title: 'Play-weighted royalty splits', citations: 96, earned: 0.288 },
-    ];
-    setIn('creator', (c) => ({ pieces: seed.map((s) => ({ id: id('pc_'), title: s.title, price: c.priceDefault, citations: s.citations, earned: s.earned, at: Date.now() })) }));
-  }
+  function seedCreator() { /* no-op — real API data only */ }
   function connectWallet(addr, kind) { setIn('creator', { wallet: addr, walletKind: kind }); set({ session: Object.assign({}, state.session, { wallet: addr, walletKind: kind }) }); }
   function listFeed(titles, price) {
     const p = parseFloat(price) || state.creator.priceDefault;
     setIn('creator', (c) => ({ priceDefault: p, pieces: titles.map((t) => ({ id: id('pc_'), title: t, price: p, citations: 0, earned: 0, at: Date.now() })).concat(c.pieces) }));
   }
-  // a live citation lands on one of the creator's pieces
-  function accrueCitation() {
-    const c = state.creator; if (!c.pieces.length) return null;
-    const i = Math.floor(Math.random() * c.pieces.length);
-    const piece = c.pieces[i];
-    const amount = piece.price;
-    const cite = { id: id('ct_'), title: piece.title, amount, receipt: 'rcpt_' + hash(8), tx: '0x' + hash(6) + '…', at: Date.now() };
-    const pieces = c.pieces.slice();
-    pieces[i] = Object.assign({}, piece, { citations: piece.citations + 1, earned: +(piece.earned + amount).toFixed(6) });
-    setIn('creator', { pieces, citations: [cite].concat(c.citations).slice(0, 40) });
-    return cite;
-  }
+  function accrueCitation() { /* no-op — real API data only */ }
   function creatorTotals() {
     const c = state.creator;
     const earned = c.pieces.reduce((s, p) => s + p.earned, 0);
