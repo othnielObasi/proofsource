@@ -19,6 +19,7 @@ export interface Snapshot {
   paidContexts: unknown[];
   auditEvents: unknown[];
   accounts: unknown[];
+  loginEvents: unknown[];
   idempotency: Array<[string, string]>;
 }
 
@@ -36,6 +37,7 @@ export function toSnapshot(): Snapshot {
     paidContexts: [...store.paidContexts.values()],
     auditEvents: [...store.auditEvents],
     accounts: [...store.accounts.values()],
+    loginEvents: [...store.loginEvents],
     idempotency: [...store.idempotency.entries()],
   };
 }
@@ -53,6 +55,7 @@ export function loadSnapshot(s: Snapshot): void {
   for (const c of s.paidContexts as any[]) store.paidContexts.set(c.id, c);
   store.auditEvents.push(...(s.auditEvents as any[]));
   for (const a of (s.accounts ?? []) as any[]) store.accounts.set(a.id, a);
+  store.loginEvents.push(...((s.loginEvents ?? []) as any[]));
   for (const [k, v] of s.idempotency) store.idempotency.set(k, v);
 }
 

@@ -5,16 +5,20 @@ const CONTENT_BG = '#080C12';
 
 /* ── Sidebar nav (app mode) ──────────────────────────────── */
 function Sidebar({ session, page, go }) {
+  const isAdmin = session.role === 'admin';
   const isCreator = session.role === 'creator';
-  const links = isCreator
-    ? [{ id: 'creator', label: 'Earnings' }, { id: 'traction', label: 'Traction' }]
+  const links = isAdmin
+    ? [{ id: 'admin', label: 'Users' }]
+    : isCreator
+    ? [{ id: 'creator', label: 'Earnings' }, { id: 'transactions', label: 'Transactions' }]
     : [{ id: 'console', label: 'Console' }, { id: 'traction', label: 'Traction' }];
+  const home = isAdmin ? 'admin' : isCreator ? 'creator' : 'console';
 
   return (
     <aside style={{ width: 220, minHeight: '100vh', background: SIDEBAR_BG, borderRight: '1px solid rgba(255,255,255,.06)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
       {/* logo */}
       <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => go(isCreator ? 'creator' : 'console')}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => go(home)}>
           <span style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(84,180,136,.18)', border: '1px solid var(--earned-line)', display: 'grid', placeItems: 'center' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--earned)', boxShadow: 'var(--glow-earned)' }} />
           </span>
@@ -25,7 +29,7 @@ function Sidebar({ session, page, go }) {
       {/* nav */}
       <nav style={{ padding: '14px 12px', flex: 1 }}>
         <div style={{ fontSize: 10, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.12em', fontWeight: 700, padding: '0 8px 8px' }}>
-          {isCreator ? 'Creator' : 'Operator'}
+          {isAdmin ? 'Admin' : isCreator ? 'Creator' : 'Operator'}
         </div>
         {links.map((l) => {
           const on = page === l.id;
@@ -38,7 +42,7 @@ function Sidebar({ session, page, go }) {
         })}
 
         <div style={{ marginTop: 24, fontSize: 10, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.12em', fontWeight: 700, padding: '0 8px 8px' }}>General</div>
-        {[{ id: 'home', label: 'Marketing site' }, { id: 'demo', label: 'Live demo' }].map((l) => (
+        {[{ id: 'demo', label: 'Live demo' }].map((l) => (
           <div key={l.id} onClick={() => go(l.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, color: 'var(--faint)', fontSize: 13.5, transition: 'color .15s' }}>
             {l.label}
           </div>
@@ -84,9 +88,10 @@ function ApiKeyBadge({ apiKey }) {
   );
 }
 
-/* ── Marketing top nav (logged-out) ─────────────────────── */
-function MarketingNav({ page, go }) {
-  const PAGES = [{ id: 'home', label: 'Home' }, { id: 'demo', label: 'Live demo' }, { id: 'solutions', label: 'Solutions' }, { id: 'developers', label: 'Developers' }];
+/* ── Marketing top nav (also shown to signed-in users who browse marketing pages) ── */
+function MarketingNav({ page, go, session }) {
+  const PAGES = [{ id: 'home', label: 'Home' }, { id: 'demo', label: 'Live demo' }, { id: 'solutions', label: 'Solutions' }, { id: 'developers', label: 'Developers' }, { id: 'analytics', label: 'Analytics' }];
+  const dashboardPage = session ? (session.role === 'admin' ? 'admin' : session.role === 'creator' ? 'creator' : 'console') : null;
   return (
     <header style={{ position: 'sticky', top: 0, zIndex: 40, display: 'flex', alignItems: 'center', gap: 20, padding: '14px 26px', borderBottom: '1px solid var(--line)', background: 'rgba(8,11,17,.78)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}>
       <Wordmark onClick={() => go('home')} />
@@ -102,8 +107,17 @@ function MarketingNav({ page, go }) {
         })}
       </nav>
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }} className="nav-right">
-        <a onClick={() => go('auth')} style={{ cursor: 'pointer', fontSize: 13.5, color: 'var(--mut)' }} className="nav-signin">Sign in</a>
-        <Btn variant="primary" size="sm" onClick={() => go('auth')}>Create account</Btn>
+        {session ? (
+          <>
+            <a onClick={() => go(dashboardPage)} style={{ cursor: 'pointer', fontSize: 13.5, color: 'var(--mut)' }}>Dashboard</a>
+            <Btn variant="primary" size="sm" onClick={() => { window.Store.signOut(); go('home'); }}>Sign out</Btn>
+          </>
+        ) : (
+          <>
+            <a onClick={() => { window.__authMode = 'signin'; go('auth'); }} style={{ cursor: 'pointer', fontSize: 13.5, color: 'var(--mut)' }} className="nav-signin">Sign in</a>
+            <Btn variant="primary" size="sm" onClick={() => { window.__authMode = 'create'; go('auth'); }}>Create account</Btn>
+          </>
+        )}
       </div>
     </header>
   );
@@ -142,7 +156,7 @@ function Footer({ go }) {
 function App() {
   const session = useStore((s) => s.session);
   const [page, setPage] = useState(() => {
-    if (session) return session.role === 'creator' ? 'creator' : 'console';
+    if (session) return session.role === 'admin' ? 'admin' : session.role === 'creator' ? 'creator' : 'console';
     return 'home';
   });
 
@@ -155,27 +169,33 @@ function App() {
 
   useEffect(() => {
     if (!session) {
-      if (['console', 'creator', 'traction'].includes(page)) setPage('home');
+      if (['console', 'creator', 'transactions', 'traction', 'admin'].includes(page)) setPage('home');
       return;
     }
-    const isCreator = session.role === 'creator';
-    const onMarketing = ['home', 'auth', 'demo', 'solutions', 'developers'].includes(page);
-    const wrongApp = (isCreator && page === 'console') || (!isCreator && page === 'creator');
-    if (onMarketing || wrongApp) setPage(isCreator ? 'creator' : 'console');
+    const home = session.role === 'admin' ? 'admin' : session.role === 'creator' ? 'creator' : 'console';
+    const onMarketing = ['home', 'auth', 'demo', 'solutions', 'developers', 'analytics'].includes(page);
+    const wrongApp =
+      (session.role === 'creator' && (page === 'console' || page === 'traction' || page === 'admin')) ||
+      (session.role === 'operator' && (page === 'creator' || page === 'transactions' || page === 'admin')) ||
+      (session.role === 'admin' && page !== 'admin');
+    if (onMarketing || wrongApp) setPage(home);
   }, [session]);
 
-  const isApp = !!session && ['console', 'creator', 'traction'].includes(page);
+  const isApp = !!session && ['console', 'creator', 'transactions', 'traction', 'admin'].includes(page);
 
   let body;
   if (!session || !isApp) {
-    if (page === 'auth') body = <Auth go={go} initialRole={window.__audience || 'creator'} />;
+    if (page === 'auth') body = <Auth go={go} initialMode={window.__authMode || 'create'} initialRole={window.__audience || 'creator'} />;
     else if (page === 'demo') body = <Demo go={go} />;
     else if (page === 'solutions') body = <Solutions go={go} />;
     else if (page === 'developers') body = <Developers go={go} />;
+    else if (page === 'analytics') body = <Analytics go={go} />;
     else body = <Home go={go} />;
   } else {
     if (page === 'console') body = <AppConsole go={go} />;
     else if (page === 'creator') body = <AppCreator go={go} />;
+    else if (page === 'admin') body = <AppAdmin go={go} />;
+    else if (page === 'transactions') body = <AppTransactions go={go} />;
     else body = <AppTraction go={go} />;
   }
 
@@ -192,7 +212,7 @@ function App() {
 
   return (
     <div>
-      <MarketingNav page={page} go={go} />
+      <MarketingNav page={page} go={go} session={session} />
       <main>{body}</main>
       <Footer go={go} />
     </div>

@@ -8,6 +8,7 @@ import { decide } from "./modules/agent/decision.js";
 import { audit } from "./modules/audit/index.js";
 import { ingestFromString, ingestFromUrl } from "./connectors/rss/ingest.js";
 import { computeTraction } from "./modules/metrics/traction.js";
+import { computePublicAnalytics } from "./modules/metrics/analytics.js";
 import { persistence } from "./persistence/index.js";
 import * as auth from "./modules/auth/index.js";
 import { readFileSync } from "node:fs";
@@ -38,8 +39,12 @@ export async function registerRoutes(app: FastifyInstance) {
     });
   app.post<{ Body: { email: string; password: string } }>(
     "/v1/proofsource/auth/login", async (req, reply) => {
-      const r = auth.login(req.body ?? ({} as any));
+      const r = auth.login(req.body ?? ({} as any), {
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+      });
       if ("error" in r) return reply.code(401).send(r);
+      await persistence.saveNow();
       return r;
     });
   app.get("/v1/proofsource/auth/me", async (req, reply) => {
@@ -267,8 +272,9 @@ export async function registerRoutes(app: FastifyInstance) {
     }
     const recent = receipts
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
-      .slice(0, 20)
+      .slice(0, 100)
       .map((r) => ({
+        id: r.id,
         title: store.resources.get(r.resourceId)?.title ?? r.resourceId,
         amountUsdc: amountOf(r.authorizationId).toFixed(6),
         at: r.createdAt,
@@ -375,6 +381,34 @@ export async function registerRoutes(app: FastifyInstance) {
 
   // Traction metrics — the figures the rubric + submission form ask for.
   app.get("/v1/proofsource/dashboard/traction", async () => computeTraction(env.paymentMode));
+
+  // Public analytics — registered users by category + daily traffic. No auth required.
+  app.get("/v1/proofsource/dashboard/analytics", async () => computePublicAnalytics());
+
+  // ── Super-admin (view all users + their login history) ─────────────────────
+  app.get("/v1/proofsource/admin/users", async (req, reply) => {
+    const r = auth.requireAdmin(req.headers.authorization);
+    if ("error" in r) return reply.code(r.code).send({ error: r.error });
+    return [...store.accounts.values()]
+      .map((acc: auth.Account) => ({
+        id: acc.id,
+        email: acc.email,
+        name: acc.name,
+        role: acc.role,
+        createdAt: acc.createdAt,
+        lastLoginAt: acc.lastLoginAt ?? null,
+        walletAddress: acc.walletAddress ?? null,
+      }))
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  });
+  app.get<{ Params: { id: string } }>("/v1/proofsource/admin/users/:id/logins", async (req, reply) => {
+    const r = auth.requireAdmin(req.headers.authorization);
+    if ("error" in r) return reply.code(r.code).send({ error: r.error });
+    return [...store.loginEvents]
+      .filter((e) => e.accountId === req.params.id)
+      .slice(-50)
+      .reverse();
+  });
 
   // Receipts, paid contexts, audit, dashboards
   app.get("/v1/proofsource/receipts", async () =>

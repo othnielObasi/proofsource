@@ -16,6 +16,14 @@ interface Workspace {
   mandate: OperatorMandate; // the operator's standing policy the agent obeys
 }
 
+interface LoginEvent {
+  id: string;
+  accountId: string;
+  at: string;
+  ip?: string;
+  userAgent?: string;
+}
+
 class Store {
   workspaces = new Map<string, Workspace>();
   providers = new Map<string, Provider>();
@@ -28,7 +36,8 @@ class Store {
   paidContexts = new Map<string, PaidContext>();
   settlements = new Map<string, SettlementRecord>();
   auditEvents: AuditEvent[] = [];
-  accounts = new Map<string, any>();    // user accounts (creators/operators)
+  accounts = new Map<string, any>();    // user accounts (creators/operators/admins)
+  loginEvents: LoginEvent[] = [];       // login history, for the super-admin dashboard
   sessions = new Map<string, string>(); // token -> accountId (not persisted)
   // idempotencyKey -> authorizationId, guards duplicate settlement
   idempotency = new Map<string, string>();
@@ -59,4 +68,4 @@ class Store {
 }
 
 export const store = new Store();
-export type { Workspace };
+export type { Workspace, LoginEvent };

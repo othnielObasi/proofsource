@@ -35,10 +35,14 @@ window.PS_API = (function () {
   async function connectFeed(body)    { return request('/creators/connect-feed', { method: 'POST', body: JSON.stringify(body) }); }
 
   async function traction() { return request('/dashboard/traction'); }
+  async function analytics() { return request('/dashboard/analytics'); }
   async function buyerDash() { return request('/dashboard/buyer'); }
   async function receipts() { return request('/receipts'); }
 
-  return { getToken, setToken, request, register, login, me, wallet, runAgent, getMandate, setMandate, seed, earnings, connectFeed, traction, buyerDash, getReceipt, receipts };
+  async function adminUsers()          { return request('/admin/users'); }
+  async function adminUserLogins(id)   { return request('/admin/users/' + id + '/logins'); }
+
+  return { getToken, setToken, request, register, login, me, wallet, runAgent, getMandate, setMandate, seed, earnings, connectFeed, traction, analytics, buyerDash, getReceipt, receipts, adminUsers, adminUserLogins };
 })();
 
 window.Store = (function () {

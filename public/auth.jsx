@@ -39,6 +39,7 @@ function Auth({ go, initialMode, initialRole }) {
         setApiKeyReveal({ key: data.apiKey, acct });
       } else {
         window.Store.signIn({ name: acct.name, email: acct.email, role: acct.role, providerId: acct.providerId, walletAddress: acct.walletAddress, walletKind: acct.walletKind, apiKey: data.apiKey || null });
+        go(acct.role === 'admin' ? 'admin' : acct.role === 'creator' ? 'creator' : 'console');
       }
     } catch (err) {
       setErr(err.data?.error || err.message || 'Something went wrong. Try again.');
@@ -186,6 +187,7 @@ function Auth({ go, initialMode, initialRole }) {
                 setTimeout(() => {
                   window.Store.signIn({ name: apiKeyReveal.acct.name, email: apiKeyReveal.acct.email, role: apiKeyReveal.acct.role, providerId: apiKeyReveal.acct.providerId, walletAddress: apiKeyReveal.acct.walletAddress, walletKind: apiKeyReveal.acct.walletKind, apiKey: apiKeyReveal.key });
                   setApiKeyReveal(null);
+                  go('console');
                 }, 800);
               }}>
                 {keyCopied ? 'Copied — continuing…' : 'Copy key & continue'}
@@ -193,6 +195,7 @@ function Auth({ go, initialMode, initialRole }) {
               <Btn variant="ghost" onClick={() => {
                 window.Store.signIn({ name: apiKeyReveal.acct.name, email: apiKeyReveal.acct.email, role: apiKeyReveal.acct.role, providerId: apiKeyReveal.acct.providerId, walletAddress: apiKeyReveal.acct.walletAddress, walletKind: apiKeyReveal.acct.walletKind, apiKey: apiKeyReveal.key });
                 setApiKeyReveal(null);
+                go('console');
               }}>Skip</Btn>
             </div>
           </div>

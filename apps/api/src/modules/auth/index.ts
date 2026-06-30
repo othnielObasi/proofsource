@@ -31,7 +31,7 @@ function verifyJwt(token: string): string | null {
   } catch { return null; }
 }
 
-export type Role = "creator" | "operator";
+export type Role = "creator" | "operator" | "admin";
 export interface Account {
   id: string;
   email: string;
@@ -44,6 +44,7 @@ export interface Account {
   workspaceId?: string;    // operators: their agent workspace
   apiKey?: string;         // operators: machine-readable API key (ps_live_<32hex>)
   createdAt: string;
+  lastLoginAt?: string;
 }
 
 export interface PublicAccount {
@@ -89,6 +90,7 @@ export function register(input: { email: string; password: string; name: string;
   const email = (input.email || "").trim().toLowerCase();
   if (!email || !input.password || !input.name) return { error: "name, email and password are required" };
   if (input.password.length < 6) return { error: "password must be at least 6 characters" };
+  if (input.role !== "creator" && input.role !== "operator") return { error: "role must be creator or operator" };
   if (findByEmail(email)) return { error: "an account with that email already exists" };
 
   const account: Account = {
@@ -121,10 +123,16 @@ export function register(input: { email: string; password: string; name: string;
   return { token: makeJwt(account.id), account: publicOf(account, true), apiKey: account.apiKey };
 }
 
-export function login(input: { email: string; password: string }):
-  { token: string; account: PublicAccount; apiKey?: string } | { error: string } {
+export function login(
+  input: { email: string; password: string },
+  meta?: { ip?: string; userAgent?: string }
+): { token: string; account: PublicAccount; apiKey?: string } | { error: string } {
   const a = findByEmail((input.email || "").trim().toLowerCase());
   if (!a || !verifyPw(input.password || "", a.pass)) return { error: "invalid email or password" };
+  const at = nowIso();
+  a.lastLoginAt = at;
+  store.accounts.set(a.id, a);
+  store.loginEvents.push({ id: id("login"), accountId: a.id, at, ip: meta?.ip, userAgent: meta?.userAgent });
   return { token: makeJwt(a.id), account: publicOf(a, true), apiKey: a.apiKey };
 }
 
@@ -164,6 +172,29 @@ export function setWallet(token: string | undefined, walletAddress: string | und
   }
   store.accounts.set(a.id, a);
   return publicOf(a);
+}
+
+// ── Super-admin ───────────────────────────────────────────────────────────────
+// No self-serve signup grants the admin role (see the role check in register()).
+// The one admin account is bootstrapped from env vars on boot, mirroring how
+// AGENT_PRIVATE_KEY and other operational secrets are handled in this codebase.
+export function ensureBootstrapAdmin(): void {
+  const email = (process.env.SUPER_ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = process.env.SUPER_ADMIN_PASSWORD || "";
+  if (!email || !password) return;
+  if (findByEmail(email)) return;
+  const account: Account = {
+    id: id("acct"), email, name: "Super Admin", role: "admin",
+    pass: hashPw(password), createdAt: nowIso(),
+  };
+  store.accounts.set(account.id, account);
+}
+
+export function requireAdmin(token?: string): { account: Account } | { error: string; code: number } {
+  const a = accountFromToken(token);
+  if (!a) return { error: "not authenticated", code: 401 };
+  if (a.role !== "admin") return { error: "forbidden", code: 403 };
+  return { account: a };
 }
 
 export { publicOf, generateApiKey };
