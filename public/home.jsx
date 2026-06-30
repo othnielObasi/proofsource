@@ -34,7 +34,7 @@ function MiniMonitor() {
 
       <div style={{ padding: '16px 16px 18px' }}>
         <div style={{ fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.12em', fontWeight: 800, marginBottom: 7 }}>question</div>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, letterSpacing: '-.02em', lineHeight: 1.25, minHeight: 40 }}>{run.q}</div>
+        <div style={{ fontSize: 14.5, fontWeight: 500, lineHeight: 1.4, minHeight: 40, color: 'var(--text)' }}>{run.q}</div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0' }}>
           <Badge tone={run.action === 'BUY' ? 'buy' : run.action === 'REUSE' ? 'reuse' : 'skip'}>{run.action}</Badge>
@@ -46,7 +46,7 @@ function MiniMonitor() {
         <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center', borderTop: '1px solid var(--line-soft)', paddingTop: 14 }}>
           <div>
             <div style={{ fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700 }}>settled</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 26, letterSpacing: '-.05em', color: run.amount ? 'var(--earned2)' : 'var(--faint)', marginTop: 2, animation: settled && run.amount ? 'flashEarn .9s ease' : 'none' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, letterSpacing: '-.01em', color: run.amount ? 'var(--earned2)' : 'var(--faint)', marginTop: 2, animation: settled && run.amount ? 'flashEarn .9s ease' : 'none' }}>
               {usd(run.amount, 6)}
             </div>
           </div>

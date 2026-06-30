@@ -46,7 +46,7 @@ function AppTraction({ go }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 32, paddingBottom: 20, borderBottom: '1px solid rgba(255,255,255,.07)' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.12em', fontWeight: 700, marginBottom: 6 }}>Traction</div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 600, letterSpacing: '-.03em' }}>Real creators, paid by AI agents.</div>
+          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.02em' }}>Real creators, paid by AI agents.</div>
           <div style={{ color: 'var(--mut)', fontSize: 13.5, marginTop: 6 }}>Derived from settled receipts — not seeded. Session data included.</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(84,180,136,.07)', border: '1px solid var(--earned-line)', borderRadius: 9, padding: '8px 13px' }}>

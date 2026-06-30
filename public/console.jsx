@@ -190,7 +190,7 @@ function AppConsole({ go }) {
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); startRun(); } }}
               placeholder="Ask a research question — the agent will decide, pay, and cite…"
-              style={{ width: '100%', background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontFamily: 'var(--font-serif)', fontSize: 16, lineHeight: 1.5, padding: '16px 16px 0', resize: 'none', minHeight: 64, boxSizing: 'border-box' }}
+              style={{ width: '100%', background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: 15, lineHeight: 1.5, padding: '16px 16px 0', resize: 'none', minHeight: 64, boxSizing: 'border-box' }}
               rows={2}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px 12px' }}>
@@ -237,7 +237,7 @@ function AppConsole({ go }) {
                       return (
                         <tr key={i} style={{ background: pick ? 'rgba(91,192,235,.04)' : 'transparent' }}>
                           <td style={{ padding: '10px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
-                            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 13.5 }}>{c.work}</div>
+                            <div style={{ fontSize: 13.5, fontWeight: 500 }}>{c.work}</div>
                             <div style={{ fontSize: 11.5, color: 'var(--mut)' }}>{c.creator}</div>
                           </td>
                           <td style={{ padding: '10px', borderTop: '1px solid rgba(255,255,255,.05)', minWidth: 110 }}><RelBar v={c.rel} /></td>

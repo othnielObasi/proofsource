@@ -95,7 +95,7 @@ function Demo({ go }) {
             <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(91,192,235,.1)', border: '1px solid rgba(91,192,235,.22)', display: 'grid', placeItems: 'center', flexShrink: 0, marginTop: 1 }}>
               <span style={{ width: 6, height: 6, borderRadius: 1, background: 'var(--buy)' }} />
             </div>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, lineHeight: 1.45, color: 'var(--text)' }}>{run.q}</span>
+            <span style={{ fontSize: 14.5, fontWeight: 500, lineHeight: 1.45, color: 'var(--text)' }}>{run.q}</span>
           </div>
 
           {/* Decision + source table */}
@@ -121,7 +121,7 @@ function Demo({ go }) {
                     return (
                       <tr key={i} style={{ background: pick ? 'rgba(91,192,235,.035)' : 'transparent', animation: 'pageIn .35s ease both', animationDelay: (i * 80) + 'ms' }}>
                         <td style={{ padding: '11px 14px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
-                          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 13.5, lineHeight: 1.3 }}>{c.work}</div>
+                          <div style={{ fontSize: 13.5, fontWeight: 500, lineHeight: 1.3 }}>{c.work}</div>
                           <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 2 }}>{c.creator}</div>
                         </td>
                         <td style={{ padding: '11px 14px', borderTop: '1px solid rgba(255,255,255,.05)', minWidth: 110 }}>
